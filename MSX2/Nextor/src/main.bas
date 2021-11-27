@@ -331,8 +331,6 @@
 1 ' CON PSG FORMATO WYZ'
 1 '*********************'
 1 'Inicialización player'
-1 '14080 paramos la música'
-1' Reproducimos efecto 7 en línea 10510
 1 'función 31 apertura de fichero
 7000 F$(0)="UWOL_P.z80":E=USR(31)
     1 '33 volcado datos a ramm P(2) segmento, P(3) dirección,P(4) tamaño, P6(0) Incrementar P(3) si <>0'
@@ -346,13 +344,13 @@
 7090 return
 1 'Reprocucir canción, necesita la variable mu con el número de canción establecida del 0 al 10'
 1 'se=Musicas (0-A)
-1 'Líneaa 420'
+1 'Línea 420 reproduce la canción 2'
 1 'linea 14000 reproduce la canción 1'
     7100 P(0)=5:P(1)=&H8003:P(2)=mu*256:E=USR(59)
 7190 return
 
 1 'Parar canción'
-1 '14080 parar canción'
+1 'En la línea 14080 para la canción'
     7200 P(0)=5:P(1)=&H8009:E=USR(59)
 7290 return
 1 'Desvanecemos la música'
