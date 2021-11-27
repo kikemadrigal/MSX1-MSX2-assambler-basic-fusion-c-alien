@@ -1,0 +1,1314 @@
+Sjasm Z80 Assembler v0.42c - www.xl2s.tk             [2021.11.27 - 07:17:57]
+
+src/music.asm
+Errors: 0
+
+       1   00:0000                              output "music.bin"
+       2   00:E000                      ;music.bin necestia 800 bytes para alojarse en la RAM, en basic tenemos hasta la direccion &hf380-800= eb00
+       3   00:E000  FE                      db   #fe               ; ID archivo binario, siempre hay que poner el mismo 0FEh
+       4   00:E001  00 E0                   dw   INICIO            ; dirección de inicio
+       5   00:E003  08 E8                   dw   FINAL - 1         ; dirección final
+       6   00:E005  00 E0                   dw   INICIO            ; dircción del programa de ejecución (para cuando pongas r en bload"nombre_programa", r)
+       7   00:E007                      
+       8   00:E007                          org #e000 ; org se utiliza para decirle al z80 en que posición de memoria empieza nuestro programa (es la 33280 en decimal), en hezadecimal sería #8200
+       9   00:E000                          ; Las variables del pt3_player está definidas en el archivo PT3_player.asm en la dirección #f000
+      10   00:E000                      INICIO:
+      11   00:E000                      inicilizar_tracker:
+      12   00:E000                          ;Deactivamos las interrupciones
+      13   00:E000  F3                      di	
+      14   00:E001  21 C7 E5            	ld		hl,SONG-99		; hl vale la direccion donde se encuentra la cancion - 99
+      15   00:E004  CD 3B E0            	call	PT3_INIT			; Inicia el reproductor de PT3
+      16   00:E007                          ;Activamos las interrupciones
+      17   00:E007  FB                  	ei 
+      18   00:E008                          ;Volvemos al basic
+      19   00:E008  C9                      ret
+      20   00:E009                      
+      21   00:E009                      reproducir_bloque_musica:
+      22   00:E009                          ;------------------Reproducir Bloque de múscia--------
+      23   00:E009  76                      halt						;sincronizacion
+      24   00:E00A  F3                  	di
+      25   00:E00B  CD 80 E5            	call	PT3_ROUT			;Borrar el valor anterior
+      26   00:E00E  CD 88 E4            	call	PT3_PLAY			;Reproduce el siguiente trozo de canción
+      27   00:E011  FB                      ei
+      28   00:E012                          ;--------------Fin de reproducir bloque de música-----
+      29   00:E012                          ;Volvemos al basic
+      30   00:E012  C9                      ret
+      31   00:E013                      para_cancion:
+      32   00:E013  CD 2F E0                call PT3_MUTE
+      33   00:E016  C9                      ret
+      34   00:E017                      evitar_repeticion_cancion:
+      35   00:E017  3A F8 F7                ld a, (#f7f8)
+      36   00:E01A  32 00 F0                ld (PT3_SETUP),a
+      37   00:E01D  C9                      ret
+      38   00:E01E                      tracker:
+      39   00:E01E                      	include	"./src/PT3_player.asm"					;replayer de PT3
+       1.  00:E01E                      		; --- PT3 REPLAYER WORKING ON ROM ---
+       2.  00:E01E                      		; --- Can be assembled with asMSX ---
+       3.  00:E01E                      		; --- ROM version: MSX-KUN        ---
+       4.  00:E01E                      		; --- asMSX version 2: SapphiRe   ---
+       5.  00:E01E                      
+       6.  00:E01E                      ; Based on MSX full version of PT3 by Dioniso
+       7.  00:E01E                      ;
+       8.  00:E01E                      ; This version of the replayer can be used with any note table
+       9.  00:E01E                      ; This version also allows the use of PT3 commands
+      10.  00:E01E                      ; First 99 bytes of each PT3 module should be stripped off
+      11.  00:E01E                      ;
+      12.  00:E01E                      ; PLAY and PSG WRITE routines seperated to allow independent calls
+      13.  00:E01E                      ;
+      14.  00:E01E                      ; ROM LENGTH: 1549 bytes
+      15.  00:E01E                      ; RAM LENGTH:  576 bytes
+      16.  00:E01E                      
+      17.  00:E01E                      
+      18.  00:E01E                      
+      19.  00:E01E                      ;SJASM version by BTV 2016
+      20.  00:E01E                      
+      21.  00:E01E                      
+      22.  00:E01E                      		; --- CONSTANT VALUES DEFINITION ---
+      23.  00:E01E                      
+      24.  00:E01E                      ;ChannelsVars
+      25.  00:E01E                      ;struc	CHNPRM
+      26.  00:E01E                      ;reset group
+      27.  00:E01E  (00:0000)           CHNPRM_PsInOr	equ 0	;RESB 1
+      28.  00:E01E  (00:0001)           CHNPRM_PsInSm	equ 1	;RESB 1
+      29.  00:E01E  (00:0002)           CHNPRM_CrAmSl	equ 2	;RESB 1
+      30.  00:E01E  (00:0003)           CHNPRM_CrNsSl	equ 3	;RESB 1
+      31.  00:E01E  (00:0004)           CHNPRM_CrEnSl	equ 4	;RESB 1
+      32.  00:E01E  (00:0005)           CHNPRM_TSlCnt	equ 5	;RESB 1
+      33.  00:E01E  (00:0006)           CHNPRM_CrTnSl	equ 6	;RESW 1
+      34.  00:E01E  (00:0008)           CHNPRM_TnAcc	equ 8	;RESW 1
+      35.  00:E01E  (00:000A)           CHNPRM_COnOff	equ 10	;RESB 1
+      36.  00:E01E                      ;reset group
+      37.  00:E01E                      
+      38.  00:E01E  (00:000B)           CHNPRM_OnOffD	equ 11	;RESB 1
+      39.  00:E01E                      
+      40.  00:E01E                      ;IX for PTDECOD here [+12]
+      41.  00:E01E  (00:000C)           CHNPRM_OffOnD	equ 12	;RESB 1
+      42.  00:E01E  (00:000D)           CHNPRM_OrnPtr	equ 13	;RESW 1
+      43.  00:E01E  (00:000F)           CHNPRM_SamPtr	equ 15	;RESW 1
+      44.  00:E01E  (00:0011)           CHNPRM_NNtSkp	equ 17	;RESB 1
+      45.  00:E01E  (00:0012)           CHNPRM_Note	equ 18	;RESB 1
+      46.  00:E01E  (00:0013)           CHNPRM_SlToNt	equ 19	;RESB 1
+      47.  00:E01E  (00:0014)           CHNPRM_Env_En	equ 20	;RESB 1
+      48.  00:E01E  (00:0015)           CHNPRM_Flags	equ 21	;RESB 1
+      49.  00:E01E                       ;Enabled - 0,SimpleGliss - 2
+      50.  00:E01E  (00:0016)           CHNPRM_TnSlDl	equ 22	;RESB 1
+      51.  00:E01E  (00:0017)           CHNPRM_TSlStp	equ 23	;RESW 1
+      52.  00:E01E  (00:0019)           CHNPRM_TnDelt	equ 25	;RESW 1
+      53.  00:E01E  (00:001B)           CHNPRM_NtSkCn	equ 27	;RESB 1
+      54.  00:E01E  (00:001C)           CHNPRM_Volume	equ 28	;RESB 1
+      55.  00:E01E  (00:001D)           CHNPRM_Size	equ 29	;RESB 1
+      56.  00:E01E                      ;endstruc
+      57.  00:E01E                      
+      58.  00:E01E                      ;struc	AR
+      59.  00:E01E  (00:0000)           AR_TonA		equ 0	;RESW 1
+      60.  00:E01E  (00:0002)           AR_TonB		equ 2	;RESW 1
+      61.  00:E01E  (00:0004)           AR_TonC		equ 4	;RESW 1
+      62.  00:E01E  (00:0006)           AR_Noise	equ 6	;RESB 1
+      63.  00:E01E  (00:0007)           AR_Mixer	equ 7	;RESB 1
+      64.  00:E01E  (00:0008)           AR_AmplA	equ 8	;RESB 1
+      65.  00:E01E  (00:0009)           AR_AmplB	equ 9	;RESB 1
+      66.  00:E01E  (00:000A)           AR_AmplC	equ 10	;RESB 1
+      67.  00:E01E  (00:000B)           AR_Env		equ 11	;RESW 1
+      68.  00:E01E  (00:000D)           AR_EnvTp	equ 13	;RESB 1
+      69.  00:E01E                      ;endstruc
+      70.  00:E01E                       
+      71.  00:E01E                      		; --- CODE STARTS HERE ---
+      72.  00:E01E                      
+      73.  00:E01E  21 00 F0            CHECKLP:	LD	HL,PT3_SETUP
+      74.  00:E021  CB FE               		SET	7,[HL]
+      75.  00:E023  CB 46               		BIT	0,[HL]
+      76.  00:E025  C8                  		RET	Z
+      77.  00:E026  E1                  		POP	HL
+      78.  00:E027  21 7A F0            		LD	HL,DelyCnt
+      79.  00:E02A  34                  		INC	[HL]
+      80.  00:E02B  21 3E F0            		LD	HL,ChanA+CHNPRM_NtSkCn
+      81.  00:E02E  34                  		INC	[HL]
+      82.  00:E02F  AF                  PT3_MUTE:	XOR	A
+      83.  00:E030  67                  		LD	H,A
+      84.  00:E031  6F                  		LD	L,A
+      85.  00:E032  32 48 F1            		LD	[AYREGS+AR_AmplA],A
+      86.  00:E035  22 49 F1            		LD	[AYREGS+AR_AmplB],HL
+      87.  00:E038  C3 81 E5            		JP	ROUT_A0
+      88.  00:E03B                      
+      89.  00:E03B                      PT3_INIT:	;HL - AddressOfModule - 100
+      90.  00:E03B  22 01 F0            		LD [PT3_MODADDR],HL
+      91.  00:E03E  E5                  		PUSH HL
+      92.  00:E03F  11 64 00            		LD DE,100
+      93.  00:E042  19                  		ADD HL,DE
+      94.  00:E043  7E                  		LD A,[HL]
+      95.  00:E044  32 1C F0            		LD [PT3_Delay],A
+      96.  00:E047  E5                  		PUSH HL
+      97.  00:E048  DD E1               		POP IX
+      98.  00:E04A  19                  		ADD HL,DE
+      99.  00:E04B  22 03 F0            		LD [PT3_CrPsPtr],HL
+     100.  00:E04E  DD 5E 02            		LD E,[IX+102-100]
+     101.  00:E051  19                  		ADD HL,DE
+     102.  00:E052  23                  		INC HL
+     103.  00:E053  22 18 F0            		LD [PT3_LPosPtr],HL
+     104.  00:E056  D1                  		POP DE
+     105.  00:E057  DD 6E 03            		LD L,[IX+103-100]
+     106.  00:E05A  DD 66 04            		LD H,[IX+104-100]
+     107.  00:E05D  19                  		ADD HL,DE
+     108.  00:E05E  22 1A F0            		LD [PT3_PatsPtr],HL
+     109.  00:E061  21 A9 00            		LD HL,169
+     110.  00:E064  19                  		ADD HL,DE
+     111.  00:E065  22 07 F0            		LD [PT3_OrnPtrs],HL
+     112.  00:E068  21 69 00            		LD HL,105
+     113.  00:E06B  19                  		ADD HL,DE
+     114.  00:E06C  22 05 F0            		LD [PT3_SAMPTRS],HL
+     115.  00:E06F  21 00 F0            		LD HL,PT3_SETUP
+     116.  00:E072  CB BE               		RES 7,[HL]
+     117.  00:E074                      
+     118.  00:E074                      		; --- note table data depacker ---
+     119.  00:E074                      		; Depacks first 12 tones of each tone table
+     120.  00:E074                      
+     121.  00:E074  11 F5 E5            		LD DE,T_PACK
+     122.  00:E077  01 B1 F1            		LD BC,T1_+(2*49)-1
+     123.  00:E07A  1A                  .TP_0:		LD A,[DE]
+     124.  00:E07B  13                  		INC DE
+     125.  00:E07C  FE 1E               		CP 15*2
+     126.  00:E07E  30 06               		JR NC,.TP_1
+     127.  00:E080  67                  		LD H,A
+     128.  00:E081  1A                  		LD A,[DE]
+     129.  00:E082  6F                  		LD L,A
+     130.  00:E083  13                  		INC DE
+     131.  00:E084  18 07               		JR .TP_2
+     132.  00:E086  D5                  .TP_1:		PUSH DE
+     133.  00:E087  16 00               		LD D,0
+     134.  00:E089  5F                  		LD E,A
+     135.  00:E08A  19                  		ADD HL,DE
+     136.  00:E08B  19                  		ADD HL,DE
+     137.  00:E08C  D1                  		POP DE
+     138.  00:E08D  7C                  .TP_2:		LD A,H
+     139.  00:E08E  02                  		LD [BC],A
+     140.  00:E08F  0B                  		DEC BC
+     141.  00:E090  7D                  		LD A,L
+     142.  00:E091  02                  		LD [BC],A
+     143.  00:E092  0B                  		DEC BC
+     144.  00:E093  D6 F0               		SUB $F0
+     145.  00:E095  20 E3               		JR NZ,.TP_0
+     146.  00:E097                      
+     147.  00:E097                      		; --- INITIALIZE PT3 VARIABLES ---
+     148.  00:E097  21 23 F0            		LD HL,VARS
+     149.  00:E09A  77                  		LD [HL],A
+     150.  00:E09B  11 24 F0            		LD DE,VARS+1
+     151.  00:E09E  01 2C 01            		LD BC,VAR0END-VARS-1
+     152.  00:E0A1  ED B0               		LDIR
+     153.  00:E0A3                      
+     154.  00:E0A3  3C                  		INC A
+     155.  00:E0A4  32 7A F0            		LD [DelyCnt],A
+     156.  00:E0A7  21 01 F0            		LD HL,$F001 ;H - CHNPRM_Volume, L - CHNPRM_NtSkCn
+     157.  00:E0AA  22 3E F0            		LD [ChanA+CHNPRM_NtSkCn],HL
+     158.  00:E0AD  22 5B F0            		LD [ChanB+CHNPRM_NtSkCn],HL
+     159.  00:E0B0  22 78 F0            		LD [ChanC+CHNPRM_NtSkCn],HL
+     160.  00:E0B3                      
+     161.  00:E0B3  21 F1 E5            		LD HL,EMPTYSAMORN
+     162.  00:E0B6  22 12 F0            		LD [PT3_AdInPtA],HL ;ptr to zero
+     163.  00:E0B9  22 30 F0            		LD [ChanA+CHNPRM_OrnPtr],HL ;ornament 0 is "0,1,0"
+     164.  00:E0BC  22 4D F0            		LD [ChanB+CHNPRM_OrnPtr],HL ;in all versions from
+     165.  00:E0BF  22 6A F0            		LD [ChanC+CHNPRM_OrnPtr],HL ;3.xx to 3.6x and VTII
+     166.  00:E0C2                      
+     167.  00:E0C2  22 32 F0            		LD [ChanA+CHNPRM_SamPtr],HL ;S1 There is no default
+     168.  00:E0C5  22 4F F0            		LD [ChanB+CHNPRM_SamPtr],HL ;S2 sample in PT3, so, you
+     169.  00:E0C8  22 6C F0            		LD [ChanC+CHNPRM_SamPtr],HL ;S3 can comment S1,2,3; see
+     170.  00:E0CB                      					    ;also EMPTYSAMORN comment
+     171.  00:E0CB                      
+     172.  00:E0CB                      		; --- NOTE TABLE CREATOR (c) Ivan Roshin, adapted by SapphiRe ---
+     173.  00:E0CB  DD 7E FF            		LD A,[IX+99-100] ;TONE TABLE NUMBER
+     174.  00:E0CE  17                  		RLA
+     175.  00:E0CF  E6 07               		AND 7
+     176.  00:E0D1  21 A1 E5            		LD HL,NT_DATA
+     177.  00:E0D4  D5                  		PUSH DE
+     178.  00:E0D5  50                  		LD D,B		; ld d,0 (bc is 0000 after LDIR)
+     179.  00:E0D6  87                  		ADD A,A
+     180.  00:E0D7  5F                  		LD E,A
+     181.  00:E0D8  19                  		ADD HL,DE	; hl -> init of correct note table data
+     182.  00:E0D9  5E                  		LD E,[HL]
+     183.  00:E0DA  23                  		INC HL
+     184.  00:E0DB  CB 3B               		SRL E
+     185.  00:E0DD  9F                  		SBC A,A
+     186.  00:E0DE  E6 A7               		AND $A7			;$00 (NOP) or $A7 (AND A)
+     187.  00:E0E0  32 21 F0            		LD [PT3_NTL3],A		; CORRECT INSTRUCTION, DEPENDS OF SELECTED TABLE
+     188.  00:E0E3  3E C9               		LD A,$C9		; RET CODE
+     189.  00:E0E5  32 22 F0            		LD [PT3_NTL3+1],A	; RET PLACED
+     190.  00:E0E8  EB                  		EX DE,HL
+     191.  00:E0E9  C1                  		POP BC ;BC=T1_
+     192.  00:E0EA  09                  		ADD HL,BC
+     193.  00:E0EB                      
+     194.  00:E0EB  1A                  		LD A,[DE]                           
+     195.  00:E0EC                      
+     196.  00:E0EC  01 B1 E5            		LD BC,T_
+     197.  00:E0EF  81                  		ADD A,C
+     198.  00:E0F0  4F                  		LD C,A
+     199.  00:E0F1  88                  		ADC A,B
+     200.  00:E0F2                      
+     201.  00:E0F2  91                  		SUB C
+     202.  00:E0F3  47                  		LD B,A
+     203.  00:E0F4  C5                  		PUSH BC
+     204.  00:E0F5  11 80 F0            		LD DE,NT_
+     205.  00:E0F8  D5                  		PUSH DE
+     206.  00:E0F9                      
+     207.  00:E0F9  06 0C               		LD B,12
+     208.  00:E0FB  C5                  .L1:		PUSH BC
+     209.  00:E0FC  4E                  		LD C,[HL]
+     210.  00:E0FD  23                  		INC HL
+     211.  00:E0FE  E5                  		PUSH HL
+     212.  00:E0FF  46                  		LD B,[HL]
+     213.  00:E100                      
+     214.  00:E100  D5                  		PUSH DE
+     215.  00:E101  EB                  		EX DE,HL
+     216.  00:E102  11 17 00            		LD DE,23
+     217.  00:E105  DD 26 08            		db $DD,$26,$08	;LD XH,8
+     218.  00:E108                      
+     219.  00:E108  CB 38               .L2:		SRL B
+     220.  00:E10A  CB 19               		RR C
+     221.  00:E10C  CD 21 F0            .L3:		CALL PT3_NTL3	;AND A or NOP
+     222.  00:E10F  79                  		LD A,C
+     223.  00:E110  8A                  		ADC A,D	;=ADC 0
+     224.  00:E111  77                  		LD [HL],A
+     225.  00:E112  23                  		INC HL
+     226.  00:E113  78                  		LD A,B
+     227.  00:E114  8A                  		ADC A,D
+     228.  00:E115  77                  		LD [HL],A
+     229.  00:E116  19                  		ADD HL,DE
+     230.  00:E117  DD 25               		db $DD,$25	;DEC XH
+     231.  00:E119  20 ED               		JR NZ,.L2
+     232.  00:E11B                      
+     233.  00:E11B  D1                  		POP DE
+     234.  00:E11C  13                  		INC DE
+     235.  00:E11D  13                  		INC DE
+     236.  00:E11E  E1                  		POP HL
+     237.  00:E11F  23                  		INC HL
+     238.  00:E120  C1                  		POP BC
+     239.  00:E121  10 D8               		DJNZ .L1
+     240.  00:E123                      
+     241.  00:E123  E1                  		POP HL
+     242.  00:E124  D1                  		POP DE
+     243.  00:E125                      
+     244.  00:E125  7B                  		LD A,E
+     245.  00:E126  D5                  		PUSH DE
+     246.  00:E127  11 BD E5            		LD DE,TCOLD_1
+     247.  00:E12A  BB                  		CP E
+     248.  00:E12B  D1                  		POP DE
+     249.  00:E12C  20 05               		JR NZ,.CORR_1
+     250.  00:E12E  3E FD               		LD A,$FD
+     251.  00:E130  32 AE F0            		LD [NT_+$2E],A
+     252.  00:E133                      
+     253.  00:E133  1A                  .CORR_1:	LD A,[DE]
+     254.  00:E134  A7                  		AND A
+     255.  00:E135  28 11               		JR Z,.TC_EXIT
+     256.  00:E137  1F                  		RRA
+     257.  00:E138  F5                  		PUSH AF
+     258.  00:E139  87                  		ADD A,A
+     259.  00:E13A  4F                  		LD C,A
+     260.  00:E13B  09                  		ADD HL,BC
+     261.  00:E13C  F1                  		POP AF
+     262.  00:E13D  30 02               		JR NC,.CORR_2
+     263.  00:E13F  35                  		DEC [HL]
+     264.  00:E140  35                  		DEC [HL]
+     265.  00:E141  34                  .CORR_2:	INC [HL]
+     266.  00:E142  A7                  		AND A
+     267.  00:E143  ED 42               		SBC HL,BC
+     268.  00:E145  13                  		INC DE
+     269.  00:E146  18 EB               		JR .CORR_1
+     270.  00:E148                      
+     271.  00:E148                      .TC_EXIT:	;POP AF
+     272.  00:E148                      
+     273.  00:E148                      		; --- CREATE PT3 VOLUME TABLE (c) Ivan Roshin, adapted by SapphiRe ---
+     274.  00:E148  21 11 00            		ld	hl,$11
+     275.  00:E14B  54                  		ld	d,h
+     276.  00:E14C  5C                  		ld	e,h
+     277.  00:E14D  DD 21 50 F1         		ld	IX,VT_+16
+     278.  00:E151  06 0F               		ld	b,15
+     279.  00:E153  E5                  .INITV1:	push	hl
+     280.  00:E154  19                  		add	hl,de
+     281.  00:E155  EB                  		ex	de,hl
+     282.  00:E156  ED 62               		sbc	hl,hl
+     283.  00:E158  48                  		ld	c,b
+     284.  00:E159  06 10               		ld	b,16
+     285.  00:E15B  7D                  .INITV2:	ld	a,l
+     286.  00:E15C  17                  		rla
+     287.  00:E15D  7C                  		ld	a,h
+     288.  00:E15E  CE 00               		adc	a,0
+     289.  00:E160  DD 77 00            		ld	[ix],a
+     290.  00:E163  DD 23               		inc	ix
+     291.  00:E165  19                  		add	hl,de
+     292.  00:E166  10 F3               		djnz	.INITV2
+     293.  00:E168  E1                  		pop	hl
+     294.  00:E169  7B                  		ld	a,e
+     295.  00:E16A  FE 77               		cp	$77
+     296.  00:E16C  20 01               		jr	nz,.INITV3
+     297.  00:E16E  1C                  		inc	e
+     298.  00:E16F  41                  .INITV3:	ld	b,c
+     299.  00:E170  10 E1               		djnz	.INITV1
+     300.  00:E172                      
+     301.  00:E172  C9                  		RET
+     302.  00:E173                      
+     303.  00:E173                      		;pattern decoder
+     304.  00:E173  DD 36 08 00         PD_OrSm:	LD [IX+(CHNPRM_Env_En-12)],0
+     305.  00:E177  CD FD E2            		CALL SETORN
+     306.  00:E17A  0A                  		LD A,[BC]
+     307.  00:E17B  03                  		INC BC
+     308.  00:E17C  0F                  		RRCA
+     309.  00:E17D                      
+     310.  00:E17D  87                  PD_SAM:		ADD A,A
+     311.  00:E17E  5F                  PD_SAM_:	LD E,A
+     312.  00:E17F  16 00               		LD D,0
+     313.  00:E181  2A 05 F0            		LD HL,[PT3_SAMPTRS]
+     314.  00:E184  19                  		ADD HL,DE
+     315.  00:E185  5E                  		LD E,[HL]
+     316.  00:E186  23                  		INC HL
+     317.  00:E187  56                  		LD D,[HL]
+     318.  00:E188  2A 01 F0            		LD HL,[PT3_MODADDR]
+     319.  00:E18B  19                  		ADD HL,DE
+     320.  00:E18C  DD 75 03            		LD [IX+(CHNPRM_SamPtr-12)],L
+     321.  00:E18F  DD 74 04            		LD [IX+(CHNPRM_SamPtr+1-12)],H
+     322.  00:E192  18 41               		JR PD_LOOP
+     323.  00:E194                      
+     324.  00:E194  07                  PD_VOL:		RLCA
+     325.  00:E195  07                  		RLCA
+     326.  00:E196  07                  		RLCA
+     327.  00:E197  07                  		RLCA
+     328.  00:E198  DD 77 10            		LD [IX+(CHNPRM_Volume-12)],A
+     329.  00:E19B  18 3B               		JR PD_LP2
+     330.  00:E19D                      	
+     331.  00:E19D  DD 77 08            PD_EOff:	LD [IX+(CHNPRM_Env_En-12)],A
+     332.  00:E1A0  DD 77 F4            		LD [IX+(CHNPRM_PsInOr-12)],A
+     333.  00:E1A3  18 33               		JR PD_LP2
+     334.  00:E1A5                      
+     335.  00:E1A5  3D                  PD_SorE:	DEC A
+     336.  00:E1A6  20 07               		JR NZ,PD_ENV
+     337.  00:E1A8  0A                  		LD A,[BC]
+     338.  00:E1A9  03                  		INC BC
+     339.  00:E1AA  DD 77 05            		LD [IX+(CHNPRM_NNtSkp-12)],A
+     340.  00:E1AD  18 29               		JR PD_LP2
+     341.  00:E1AF                      
+     342.  00:E1AF  CD E1 E2            PD_ENV:		CALL SETENV
+     343.  00:E1B2  18 24               		JR PD_LP2
+     344.  00:E1B4                      
+     345.  00:E1B4  CD FD E2            PD_ORN:		CALL SETORN
+     346.  00:E1B7  18 1C               		JR PD_LOOP
+     347.  00:E1B9                             
+     348.  00:E1B9  DD 77 08            PD_ESAM:	LD [IX+(CHNPRM_Env_En-12)],A
+     349.  00:E1BC  DD 77 F4            		LD [IX+(CHNPRM_PsInOr-12)],A
+     350.  00:E1BF  C4 E1 E2            		CALL NZ,SETENV
+     351.  00:E1C2  0A                  		LD A,[BC]
+     352.  00:E1C3  03                  		INC BC
+     353.  00:E1C4  18 B8               		JR PD_SAM_
+     354.  00:E1C6                      
+     355.  00:E1C6  DD 7E 06            PTDECOD:	LD A,[IX+(CHNPRM_Note-12)]
+     356.  00:E1C9  32 0F F0            		LD [PT3_PrNote],A
+     357.  00:E1CC  DD 6E FA            		LD L,[IX+(CHNPRM_CrTnSl-12)]
+     358.  00:E1CF  DD 66 FB            		LD H,[IX+(CHNPRM_CrTnSl+1-12)]
+     359.  00:E1D2  22 10 F0            		LD [PT3_PrSlide],HL
+     360.  00:E1D5                      
+     361.  00:E1D5  11 10 20            PD_LOOP:	LD DE,$2010
+     362.  00:E1D8  0A                  PD_LP2:		LD A,[BC]
+     363.  00:E1D9  03                  		INC BC
+     364.  00:E1DA  83                  		ADD A,E
+     365.  00:E1DB  38 96               		JR C,PD_OrSm
+     366.  00:E1DD  82                  		ADD A,D
+     367.  00:E1DE  28 4A               		JR Z,PD_FIN
+     368.  00:E1E0  38 9B               		JR C,PD_SAM
+     369.  00:E1E2  83                  		ADD A,E
+     370.  00:E1E3  28 25               		JR Z,PD_REL
+     371.  00:E1E5  38 AD               		JR C,PD_VOL
+     372.  00:E1E7  83                  		ADD A,E
+     373.  00:E1E8  28 B3               		JR Z,PD_EOff
+     374.  00:E1EA  38 B9               		JR C,PD_SorE
+     375.  00:E1EC  C6 60               		ADD A,96
+     376.  00:E1EE  38 20               		JR C,PD_NOTE
+     377.  00:E1F0  83                  		ADD A,E
+     378.  00:E1F1  38 C1               		JR C,PD_ORN
+     379.  00:E1F3  82                  		ADD A,D
+     380.  00:E1F4  38 0F               		JR C,PD_NOIS
+     381.  00:E1F6  83                  		ADD A,E
+     382.  00:E1F7  38 C0               		JR C,PD_ESAM
+     383.  00:E1F9  87                  		ADD A,A
+     384.  00:E1FA  5F                  		LD E,A
+     385.  00:E1FB  21 36 C2            		LD HL,(SPCCOMS+$DF20) % 65536	; Adapted from original Speccy version (saves 6 bytes)
+     386.  00:E1FE  19                  		ADD HL,DE
+     387.  00:E1FF  5E                  		LD E,[HL]
+     388.  00:E200  23                  		INC HL
+     389.  00:E201  56                  		LD D,[HL]
+     390.  00:E202  D5                  		PUSH DE
+     391.  00:E203  18 D0               		JR PD_LOOP
+     392.  00:E205                      
+     393.  00:E205  32 7E F0            PD_NOIS:	LD [Ns_Base],A
+     394.  00:E208  18 CE               		JR PD_LP2
+     395.  00:E20A                      
+     396.  00:E20A  DD CB 09 86         PD_REL:		RES 0,[IX+(CHNPRM_Flags-12)]
+     397.  00:E20E  18 08               		JR PD_RES
+     398.  00:E210                      	
+     399.  00:E210  DD 77 06            PD_NOTE:	LD [IX+(CHNPRM_Note-12)],A
+     400.  00:E213  DD CB 09 C6         		SET 0,[IX+(CHNPRM_Flags-12)]
+     401.  00:E217  AF                  		XOR A
+     402.  00:E218                      
+     403.  00:E218  ED 73 09 F0         PD_RES:		LD [PT3_PDSP],SP
+     404.  00:E21C  DD F9               		LD SP,IX
+     405.  00:E21E  67                  		LD H,A
+     406.  00:E21F  6F                  		LD L,A
+     407.  00:E220  E5                  		PUSH HL
+     408.  00:E221  E5                  		PUSH HL
+     409.  00:E222  E5                  		PUSH HL
+     410.  00:E223  E5                  		PUSH HL
+     411.  00:E224  E5                  		PUSH HL
+     412.  00:E225  E5                  		PUSH HL
+     413.  00:E226  ED 7B 09 F0         		LD SP,[PT3_PDSP]
+     414.  00:E22A                      
+     415.  00:E22A  DD 7E 05            PD_FIN:		LD A,[IX+(CHNPRM_NNtSkp-12)]
+     416.  00:E22D  DD 77 0F            		LD [IX+(CHNPRM_NtSkCn-12)],A
+     417.  00:E230  C9                  		RET
+     418.  00:E231                      
+     419.  00:E231  DD CB 09 96         C_PORTM:	RES 2,[IX+(CHNPRM_Flags-12)]
+     420.  00:E235  0A                  		LD A,[BC]
+     421.  00:E236  03                  		INC BC
+     422.  00:E237                      		;SKIP PRECALCULATED TONE DELTA [BECAUSE
+     423.  00:E237                      		;CANNOT BE RIGHT AFTER PT3 COMPILATION]
+     424.  00:E237  03                  		INC BC
+     425.  00:E238  03                  		INC BC
+     426.  00:E239  DD 77 0A            		LD [IX+(CHNPRM_TnSlDl-12)],A
+     427.  00:E23C  DD 77 F9            		LD [IX+(CHNPRM_TSlCnt-12)],A
+     428.  00:E23F  11 80 F0            		LD DE,NT_
+     429.  00:E242  DD 7E 06            		LD A,[IX+(CHNPRM_Note-12)]
+     430.  00:E245  DD 77 07            		LD [IX+(CHNPRM_SlToNt-12)],A
+     431.  00:E248  87                  		ADD A,A
+     432.  00:E249  6F                  		LD L,A
+     433.  00:E24A  26 00               		LD H,0
+     434.  00:E24C  19                  		ADD HL,DE
+     435.  00:E24D  7E                  		LD A,[HL]
+     436.  00:E24E  23                  		INC HL
+     437.  00:E24F  66                  		LD H,[HL]
+     438.  00:E250  6F                  		LD L,A
+     439.  00:E251  E5                  		PUSH HL
+     440.  00:E252  3A 0F F0            		LD A,[PT3_PrNote]
+     441.  00:E255  DD 77 06            		LD [IX+(CHNPRM_Note-12)],A
+     442.  00:E258  87                  		ADD A,A
+     443.  00:E259  6F                  		LD L,A
+     444.  00:E25A  26 00               		LD H,0
+     445.  00:E25C  19                  		ADD HL,DE
+     446.  00:E25D  5E                  		LD E,[HL]
+     447.  00:E25E  23                  		INC HL
+     448.  00:E25F  56                  		LD D,[HL]
+     449.  00:E260  E1                  		POP HL
+     450.  00:E261  ED 52               		SBC HL,DE
+     451.  00:E263  DD 75 0D            		LD [IX+(CHNPRM_TnDelt-12)],L
+     452.  00:E266  DD 74 0E            		LD [IX+(CHNPRM_TnDelt+1-12)],H
+     453.  00:E269  ED 5B 10 F0         		LD DE,[PT3_PrSlide]
+     454.  00:E26D  DD 73 FA            		LD [IX+(CHNPRM_CrTnSl-12)],E
+     455.  00:E270  DD 72 FB            		LD [IX+(CHNPRM_CrTnSl+1-12)],D
+     456.  00:E273  0A                  		LD A,[BC] ;SIGNED TONE STEP
+     457.  00:E274  03                  		INC BC
+     458.  00:E275  08                  		EX AF,AF'
+     459.  00:E276  0A                  		LD A,[BC]
+     460.  00:E277  03                  		INC BC
+     461.  00:E278  A7                  		AND A
+     462.  00:E279  28 01               		JR Z,.NOSIG
+     463.  00:E27B  EB                  		EX DE,HL
+     464.  00:E27C  ED 52               .NOSIG:	SBC HL,DE
+     465.  00:E27E  F2 86 E2            		JP P,SET_STP
+     466.  00:E281  2F                  		CPL
+     467.  00:E282  08                  		EX AF,AF'
+     468.  00:E283  ED 44               		NEG
+     469.  00:E285  08                  		EX AF,AF'
+     470.  00:E286  DD 77 0C            SET_STP:	LD [IX+(CHNPRM_TSlStp+1-12)],A
+     471.  00:E289  08                  		EX AF,AF'
+     472.  00:E28A  DD 77 0B            		LD [IX+(CHNPRM_TSlStp-12)],A
+     473.  00:E28D  DD 36 FE 00         		LD [IX+(CHNPRM_COnOff-12)],0
+     474.  00:E291  C9                  		RET
+     475.  00:E292                      
+     476.  00:E292  DD CB 09 D6         C_GLISS:	SET 2,[IX+(CHNPRM_Flags-12)]
+     477.  00:E296  0A                  		LD A,[BC]
+     478.  00:E297  03                  		INC BC
+     479.  00:E298  DD 77 0A            		LD [IX+(CHNPRM_TnSlDl-12)],A
+     480.  00:E29B  DD 77 F9            		LD [IX+(CHNPRM_TSlCnt-12)],A
+     481.  00:E29E  0A                  		LD A,[BC]
+     482.  00:E29F  03                  		INC BC
+     483.  00:E2A0  08                  		EX AF,AF'
+     484.  00:E2A1  0A                  		LD A,[BC]
+     485.  00:E2A2  03                  		INC BC
+     486.  00:E2A3  18 E1               		JR SET_STP
+     487.  00:E2A5                      
+     488.  00:E2A5  0A                  C_SMPOS:	LD A,[BC]
+     489.  00:E2A6  03                  		INC BC
+     490.  00:E2A7  DD 77 F5            		LD [IX+(CHNPRM_PsInSm-12)],A
+     491.  00:E2AA  C9                  		RET
+     492.  00:E2AB                      
+     493.  00:E2AB  0A                  C_ORPOS:	LD A,[BC]
+     494.  00:E2AC  03                  		INC BC
+     495.  00:E2AD  DD 77 F4            		LD [IX+(CHNPRM_PsInOr-12)],A
+     496.  00:E2B0  C9                  		RET
+     497.  00:E2B1                      
+     498.  00:E2B1  0A                  C_VIBRT:	LD A,[BC]
+     499.  00:E2B2  03                  		INC BC
+     500.  00:E2B3  DD 77 FF            		LD [IX+(CHNPRM_OnOffD-12)],A
+     501.  00:E2B6  DD 77 FE            		LD [IX+(CHNPRM_COnOff-12)],A
+     502.  00:E2B9  0A                  		LD A,[BC]
+     503.  00:E2BA  03                  		INC BC
+     504.  00:E2BB  DD 77 00            		LD [IX+(CHNPRM_OffOnD-12)],A
+     505.  00:E2BE  AF                  		XOR A
+     506.  00:E2BF  DD 77 F9            		LD [IX+(CHNPRM_TSlCnt-12)],A
+     507.  00:E2C2  DD 77 FA            		LD [IX+(CHNPRM_CrTnSl-12)],A
+     508.  00:E2C5  DD 77 FB            		LD [IX+(CHNPRM_CrTnSl+1-12)],A
+     509.  00:E2C8  C9                  		RET
+     510.  00:E2C9                      
+     511.  00:E2C9  0A                  C_ENGLS:	LD A,[BC]
+     512.  00:E2CA  03                  		INC BC
+     513.  00:E2CB  32 1E F0            		LD [PT3_Env_Del],A
+     514.  00:E2CE  32 7D F0            		LD [CurEDel],A
+     515.  00:E2D1  0A                  		LD A,[BC]
+     516.  00:E2D2  03                  		INC BC
+     517.  00:E2D3  6F                  		LD L,A
+     518.  00:E2D4  0A                  		LD A,[BC]
+     519.  00:E2D5  03                  		INC BC
+     520.  00:E2D6  67                  		LD H,A
+     521.  00:E2D7  22 1F F0            		LD [PT3_ESldAdd],HL
+     522.  00:E2DA  C9                  		RET
+     523.  00:E2DB                      
+     524.  00:E2DB  0A                  C_DELAY:	LD A,[BC]
+     525.  00:E2DC  03                  		INC BC
+     526.  00:E2DD  32 1C F0            		LD [PT3_Delay],A
+     527.  00:E2E0  C9                  		RET
+     528.  00:E2E1                      	
+     529.  00:E2E1  DD 73 08            SETENV:		LD [IX+(CHNPRM_Env_En-12)],E
+     530.  00:E2E4  32 4D F1            		LD [AYREGS+AR_EnvTp],A
+     531.  00:E2E7  0A                  		LD A,[BC]
+     532.  00:E2E8  03                  		INC BC
+     533.  00:E2E9  67                  		LD H,A
+     534.  00:E2EA  0A                  		LD A,[BC]
+     535.  00:E2EB  03                  		INC BC
+     536.  00:E2EC  6F                  		LD L,A
+     537.  00:E2ED  22 4E F1            		LD [EnvBase],HL
+     538.  00:E2F0  AF                  		XOR A
+     539.  00:E2F1  DD 77 F4            		LD [IX+(CHNPRM_PsInOr-12)],A
+     540.  00:E2F4  32 7D F0            		LD [CurEDel],A
+     541.  00:E2F7  67                  		LD H,A
+     542.  00:E2F8  6F                  		LD L,A
+     543.  00:E2F9  22 7B F0            		LD [CurESld],HL
+     544.  00:E2FC  C9                  C_NOP:		RET
+     545.  00:E2FD                      
+     546.  00:E2FD  87                  SETORN:		ADD A,A
+     547.  00:E2FE  5F                  		LD E,A
+     548.  00:E2FF  16 00               		LD D,0
+     549.  00:E301  DD 72 F4            		LD [IX+(CHNPRM_PsInOr-12)],D
+     550.  00:E304  2A 07 F0            		LD HL,[PT3_OrnPtrs]
+     551.  00:E307  19                  		ADD HL,DE
+     552.  00:E308  5E                  		LD E,[HL]
+     553.  00:E309  23                  		INC HL
+     554.  00:E30A  56                  		LD D,[HL]
+     555.  00:E30B  2A 01 F0            		LD HL,[PT3_MODADDR]
+     556.  00:E30E  19                  		ADD HL,DE
+     557.  00:E30F  DD 75 01            		LD [IX+(CHNPRM_OrnPtr-12)],L
+     558.  00:E312  DD 74 02            		LD [IX+(CHNPRM_OrnPtr+1-12)],H
+     559.  00:E315  C9                  		RET
+     560.  00:E316                      
+     561.  00:E316                      		;ALL 16 ADDRESSES TO PROTECT FROM BROKEN PT3 MODULES
+     562.  00:E316  FC E2               SPCCOMS:	dw C_NOP
+     563.  00:E318  92 E2               		dw C_GLISS
+     564.  00:E31A  31 E2               		dw C_PORTM
+     565.  00:E31C  A5 E2               		dw C_SMPOS
+     566.  00:E31E  AB E2               		dw C_ORPOS
+     567.  00:E320  B1 E2               		dw C_VIBRT
+     568.  00:E322  FC E2               		dw C_NOP
+     569.  00:E324  FC E2               		dw C_NOP
+     570.  00:E326  C9 E2               		dw C_ENGLS
+     571.  00:E328  DB E2               		dw C_DELAY
+     572.  00:E32A  FC E2               		dw C_NOP
+     573.  00:E32C  FC E2               		dw C_NOP
+     574.  00:E32E  FC E2               		dw C_NOP
+     575.  00:E330  FC E2               		dw C_NOP
+     576.  00:E332  FC E2               		dw C_NOP
+     577.  00:E334  FC E2               		dw C_NOP
+     578.  00:E336                      
+     579.  00:E336  AF                  CHREGS:		XOR A
+     580.  00:E337  32 4A F1            		LD [AYREGS+AR_AmplC],A
+     581.  00:E33A  DD CB 15 46         		BIT 0,[IX+CHNPRM_Flags]
+     582.  00:E33E  E5                  		PUSH HL
+     583.  00:E33F  CA 65 E4            		JP Z,.CH_EXIT
+     584.  00:E342  ED 73 0B F0         		LD [PT3_CSP],SP
+     585.  00:E346  DD 6E 0D            		LD L,[IX+CHNPRM_OrnPtr]
+     586.  00:E349  DD 66 0E            		LD H,[IX+CHNPRM_OrnPtr+1]
+     587.  00:E34C  F9                  		LD SP,HL
+     588.  00:E34D  D1                  		POP DE
+     589.  00:E34E  67                  		LD H,A
+     590.  00:E34F  DD 7E 00            		LD A,[IX+CHNPRM_PsInOr]
+     591.  00:E352  6F                  		LD L,A
+     592.  00:E353  39                  		ADD HL,SP
+     593.  00:E354  3C                  		INC A
+     594.  00:E355  BA                  		CP D
+     595.  00:E356  38 01               		JR C,.CH_ORPS
+     596.  00:E358  7B                  		LD A,E
+     597.  00:E359  DD 77 00            .CH_ORPS:	LD [IX+CHNPRM_PsInOr],A
+     598.  00:E35C  DD 7E 12            		LD A,[IX+CHNPRM_Note]
+     599.  00:E35F  86                  		ADD A,[HL]
+     600.  00:E360  F2 64 E3            		JP P,.CH_NTP
+     601.  00:E363  AF                  		XOR A
+     602.  00:E364  FE 60               .CH_NTP:	CP 96
+     603.  00:E366  38 02               		JR C,.CH_NOK
+     604.  00:E368  3E 5F               		LD A,95
+     605.  00:E36A  87                  .CH_NOK:	ADD A,A
+     606.  00:E36B  08                  		EX AF,AF'
+     607.  00:E36C  DD 6E 0F            		LD L,[IX+CHNPRM_SamPtr]
+     608.  00:E36F  DD 66 10            		LD H,[IX+CHNPRM_SamPtr+1]
+     609.  00:E372  F9                  		LD SP,HL
+     610.  00:E373  D1                  		POP DE
+     611.  00:E374  26 00               		LD H,0
+     612.  00:E376  DD 7E 01            		LD A,[IX+CHNPRM_PsInSm]
+     613.  00:E379  47                  		LD B,A
+     614.  00:E37A  87                  		ADD A,A
+     615.  00:E37B  87                  		ADD A,A
+     616.  00:E37C  6F                  		LD L,A
+     617.  00:E37D  39                  		ADD HL,SP
+     618.  00:E37E  F9                  		LD SP,HL
+     619.  00:E37F  78                  		LD A,B
+     620.  00:E380  3C                  		INC A
+     621.  00:E381  BA                  		CP D
+     622.  00:E382  38 01               		JR C,.CH_SMPS
+     623.  00:E384  7B                  		LD A,E
+     624.  00:E385  DD 77 01            .CH_SMPS:	LD [IX+CHNPRM_PsInSm],A
+     625.  00:E388  C1                  		POP BC
+     626.  00:E389  E1                  		POP HL
+     627.  00:E38A  DD 5E 08            		LD E,[IX+CHNPRM_TnAcc]
+     628.  00:E38D  DD 56 09            		LD D,[IX+CHNPRM_TnAcc+1]
+     629.  00:E390  19                  		ADD HL,DE
+     630.  00:E391  CB 70               		BIT 6,B
+     631.  00:E393  28 06               		JR Z,.CH_NOAC
+     632.  00:E395  DD 75 08            		LD [IX+CHNPRM_TnAcc],L
+     633.  00:E398  DD 74 09            		LD [IX+CHNPRM_TnAcc+1],H
+     634.  00:E39B  EB                  .CH_NOAC:	EX DE,HL
+     635.  00:E39C  08                  		EX AF,AF'
+     636.  00:E39D  6F                  		LD L,A
+     637.  00:E39E  26 00               		LD H,0
+     638.  00:E3A0  31 80 F0            		LD SP,NT_
+     639.  00:E3A3  39                  		ADD HL,SP
+     640.  00:E3A4  F9                  		LD SP,HL
+     641.  00:E3A5  E1                  		POP HL
+     642.  00:E3A6  19                  		ADD HL,DE
+     643.  00:E3A7  DD 5E 06            		LD E,[IX+CHNPRM_CrTnSl]
+     644.  00:E3AA  DD 56 07            		LD D,[IX+CHNPRM_CrTnSl+1]
+     645.  00:E3AD  19                  		ADD HL,DE
+     646.  00:E3AE  ED 7B 0B F0         		LD SP,[PT3_CSP]
+     647.  00:E3B2  E3                  		EX [SP],HL
+     648.  00:E3B3  AF                  		XOR A
+     649.  00:E3B4  DD B6 05            		OR [IX+CHNPRM_TSlCnt]
+     650.  00:E3B7  28 3E               		JR Z,.CH_AMP
+     651.  00:E3B9  DD 35 05            		DEC [IX+CHNPRM_TSlCnt]
+     652.  00:E3BC  20 39               		JR NZ,.CH_AMP
+     653.  00:E3BE  DD 7E 16            		LD A,[IX+CHNPRM_TnSlDl]
+     654.  00:E3C1  DD 77 05            		LD [IX+CHNPRM_TSlCnt],A
+     655.  00:E3C4  DD 6E 17            		LD L,[IX+CHNPRM_TSlStp]
+     656.  00:E3C7  DD 66 18            		LD H,[IX+CHNPRM_TSlStp+1]
+     657.  00:E3CA  7C                  		LD A,H
+     658.  00:E3CB  19                  		ADD HL,DE
+     659.  00:E3CC  DD 75 06            		LD [IX+CHNPRM_CrTnSl],L
+     660.  00:E3CF  DD 74 07            		LD [IX+CHNPRM_CrTnSl+1],H
+     661.  00:E3D2  DD CB 15 56         		BIT 2,[IX+CHNPRM_Flags]
+     662.  00:E3D6  20 1F               		JR NZ,.CH_AMP
+     663.  00:E3D8  DD 5E 19            		LD E,[IX+CHNPRM_TnDelt]
+     664.  00:E3DB  DD 56 1A            		LD D,[IX+CHNPRM_TnDelt+1]
+     665.  00:E3DE  A7                  		AND A
+     666.  00:E3DF  28 01               		JR Z,.CH_STPP
+     667.  00:E3E1  EB                  		EX DE,HL
+     668.  00:E3E2  ED 52               .CH_STPP:	SBC HL,DE
+     669.  00:E3E4  FA F7 E3            		JP M,.CH_AMP
+     670.  00:E3E7  DD 7E 13            		LD A,[IX+CHNPRM_SlToNt]
+     671.  00:E3EA  DD 77 12            		LD [IX+CHNPRM_Note],A
+     672.  00:E3ED  AF                  		XOR A
+     673.  00:E3EE  DD 77 05            		LD [IX+CHNPRM_TSlCnt],A
+     674.  00:E3F1  DD 77 06            		LD [IX+CHNPRM_CrTnSl],A
+     675.  00:E3F4  DD 77 07            		LD [IX+CHNPRM_CrTnSl+1],A
+     676.  00:E3F7  DD 7E 02            .CH_AMP:	LD A,[IX+CHNPRM_CrAmSl]
+     677.  00:E3FA  CB 79               		BIT 7,C
+     678.  00:E3FC  28 13               		JR Z,.CH_NOAM
+     679.  00:E3FE  CB 71               		BIT 6,C
+     680.  00:E400  28 07               		JR Z,.CH_AMIN
+     681.  00:E402  FE 0F               		CP 15
+     682.  00:E404  28 0B               		JR Z,.CH_NOAM
+     683.  00:E406  3C                  		INC A
+     684.  00:E407  18 05               		JR .CH_SVAM
+     685.  00:E409  FE F1               .CH_AMIN:	CP -15
+     686.  00:E40B  28 04               		JR Z,.CH_NOAM
+     687.  00:E40D  3D                  		DEC A
+     688.  00:E40E  DD 77 02            .CH_SVAM:	LD [IX+CHNPRM_CrAmSl],A
+     689.  00:E411  6F                  .CH_NOAM:	LD L,A
+     690.  00:E412  78                  		LD A,B
+     691.  00:E413  E6 0F               		AND 15
+     692.  00:E415  85                  		ADD A,L
+     693.  00:E416  F2 1A E4            		JP P,.CH_APOS
+     694.  00:E419  AF                  		XOR A
+     695.  00:E41A  FE 10               .CH_APOS:	CP 16
+     696.  00:E41C  38 02               		JR C,.CH_VOL
+     697.  00:E41E  3E 0F               		LD A,15
+     698.  00:E420  DD B6 1C            .CH_VOL:	OR [IX+CHNPRM_Volume]
+     699.  00:E423  6F                  		LD L,A
+     700.  00:E424  26 00               		LD H,0
+     701.  00:E426  11 40 F1            		LD DE,VT_
+     702.  00:E429  19                  		ADD HL,DE
+     703.  00:E42A  7E                  		LD A,[HL]
+     704.  00:E42B  CB 41               .CH_ENV:	BIT 0,C
+     705.  00:E42D  20 03               		JR NZ,.CH_NOEN
+     706.  00:E42F  DD B6 14            		OR [IX+CHNPRM_Env_En]
+     707.  00:E432  32 4A F1            .CH_NOEN:	LD [AYREGS+AR_AmplC],A
+     708.  00:E435  CB 78               		BIT 7,B
+     709.  00:E437  79                  		LD A,C
+     710.  00:E438  28 19               		JR Z,.NO_ENSL
+     711.  00:E43A  17                  		RLA
+     712.  00:E43B  17                  		RLA
+     713.  00:E43C  CB 2F               		SRA A
+     714.  00:E43E  CB 2F               		SRA A
+     715.  00:E440  CB 2F               		SRA A
+     716.  00:E442  DD 86 04            		ADD A,[IX+CHNPRM_CrEnSl] ;SEE COMMENT BELOW
+     717.  00:E445  CB 68               		BIT 5,B
+     718.  00:E447  28 03               		JR Z,.NO_ENAC
+     719.  00:E449  DD 77 04            		LD [IX+CHNPRM_CrEnSl],A
+     720.  00:E44C  21 1D F0            .NO_ENAC:	LD HL,PT3_AddToEn
+     721.  00:E44F  86                  		ADD A,[HL] ;BUG IN PT3 - NEED WORD HERE.
+     722.  00:E450                      			   ;FIX IT IN NEXT VERSION?
+     723.  00:E450  77                  		LD [HL],A
+     724.  00:E451  18 0E               		JR .CH_MIX
+     725.  00:E453  1F                  .NO_ENSL:	RRA
+     726.  00:E454  DD 86 03            		ADD A,[IX+CHNPRM_CrNsSl]
+     727.  00:E457  32 7F F0            		LD [AddToNs],A
+     728.  00:E45A  CB 68               		BIT 5,B
+     729.  00:E45C  28 03               		JR Z,.CH_MIX
+     730.  00:E45E  DD 77 03            		LD [IX+CHNPRM_CrNsSl],A
+     731.  00:E461  78                  .CH_MIX:	LD A,B
+     732.  00:E462  1F                  		RRA
+     733.  00:E463  E6 48               		AND $48
+     734.  00:E465  21 47 F1            .CH_EXIT:	LD HL,AYREGS+AR_Mixer
+     735.  00:E468  B6                  		OR [HL]
+     736.  00:E469  0F                  		RRCA
+     737.  00:E46A  77                  		LD [HL],A
+     738.  00:E46B  E1                  		POP HL
+     739.  00:E46C  AF                  		XOR A
+     740.  00:E46D  DD B6 0A            		OR [IX+CHNPRM_COnOff]
+     741.  00:E470  C8                  		RET Z
+     742.  00:E471  DD 35 0A            		DEC [IX+CHNPRM_COnOff]
+     743.  00:E474  C0                  		RET NZ
+     744.  00:E475  DD AE 15            		XOR [IX+CHNPRM_Flags]
+     745.  00:E478  DD 77 15            		LD [IX+CHNPRM_Flags],A
+     746.  00:E47B  1F                  		RRA
+     747.  00:E47C  DD 7E 0B            		LD A,[IX+CHNPRM_OnOffD]
+     748.  00:E47F  38 03               		JR C,.CH_ONDL
+     749.  00:E481  DD 7E 0C            		LD A,[IX+CHNPRM_OffOnD]
+     750.  00:E484  DD 77 0A            .CH_ONDL:	LD [IX+CHNPRM_COnOff],A
+     751.  00:E487  C9                  		RET
+     752.  00:E488                      
+     753.  00:E488  AF                  PT3_PLAY:	XOR A
+     754.  00:E489  32 1D F0            		LD [PT3_AddToEn],A
+     755.  00:E48C  32 47 F1            		LD [AYREGS+AR_Mixer],A
+     756.  00:E48F  3D                  		DEC A
+     757.  00:E490  32 4D F1            		LD [AYREGS+AR_EnvTp],A
+     758.  00:E493  21 7A F0            		LD HL,DelyCnt
+     759.  00:E496  35                  		DEC [HL]
+     760.  00:E497  C2 1E E5            		JP NZ,.PL2
+     761.  00:E49A  21 3E F0            		LD HL,ChanA+CHNPRM_NtSkCn
+     762.  00:E49D  35                  		DEC [HL]
+     763.  00:E49E  20 4E               		JR NZ,.PL1B
+     764.  00:E4A0  ED 4B 12 F0         		LD BC,[PT3_AdInPtA]
+     765.  00:E4A4  0A                  		LD A,[BC]
+     766.  00:E4A5  A7                  		AND A
+     767.  00:E4A6  20 3B               		JR NZ,.PL1A
+     768.  00:E4A8  57                  		LD D,A
+     769.  00:E4A9  32 7E F0            		LD [Ns_Base],A
+     770.  00:E4AC  2A 03 F0            		LD HL,[PT3_CrPsPtr]
+     771.  00:E4AF  23                  		INC HL
+     772.  00:E4B0  7E                  		LD A,[HL]
+     773.  00:E4B1  3C                  		INC A
+     774.  00:E4B2  20 08               		JR NZ,.PLNLP
+     775.  00:E4B4  CD 1E E0            		CALL CHECKLP
+     776.  00:E4B7  2A 18 F0            		LD HL,[PT3_LPosPtr]
+     777.  00:E4BA  7E                  		LD A,[HL]
+     778.  00:E4BB  3C                  		INC A
+     779.  00:E4BC  22 03 F0            .PLNLP:	LD [PT3_CrPsPtr],HL
+     780.  00:E4BF  3D                  		DEC A
+     781.  00:E4C0  87                  		ADD A,A
+     782.  00:E4C1  5F                  		LD E,A
+     783.  00:E4C2  CB 12               		RL D
+     784.  00:E4C4  2A 1A F0            		LD HL,[PT3_PatsPtr]
+     785.  00:E4C7  19                  		ADD HL,DE
+     786.  00:E4C8  ED 5B 01 F0         		LD DE,[PT3_MODADDR]
+     787.  00:E4CC  ED 73 0D F0         		LD [PT3_PSP],SP
+     788.  00:E4D0  F9                  		LD SP,HL
+     789.  00:E4D1  E1                  		POP HL
+     790.  00:E4D2  19                  		ADD HL,DE
+     791.  00:E4D3  44                  		LD B,H
+     792.  00:E4D4  4D                  		LD C,L
+     793.  00:E4D5  E1                  		POP HL
+     794.  00:E4D6  19                  		ADD HL,DE
+     795.  00:E4D7  22 14 F0            		LD [PT3_AdInPtB],HL
+     796.  00:E4DA  E1                  		POP HL
+     797.  00:E4DB  19                  		ADD HL,DE
+     798.  00:E4DC  22 16 F0            		LD [PT3_AdInPtC],HL
+     799.  00:E4DF  ED 7B 0D F0         		LD SP,[PT3_PSP]
+     800.  00:E4E3                      
+     801.  00:E4E3  DD 21 2F F0         .PL1A:		LD IX,ChanA+12
+     802.  00:E4E7  CD C6 E1            		CALL PTDECOD
+     803.  00:E4EA  ED 43 12 F0         		LD [PT3_AdInPtA],BC
+     804.  00:E4EE                      
+     805.  00:E4EE  21 5B F0            .PL1B:		LD HL,ChanB+CHNPRM_NtSkCn
+     806.  00:E4F1  35                  		DEC [HL]
+     807.  00:E4F2  20 0F               		JR NZ,.PL1C
+     808.  00:E4F4  DD 21 4C F0         		LD IX,ChanB+12
+     809.  00:E4F8  ED 4B 14 F0         		LD BC,[PT3_AdInPtB]
+     810.  00:E4FC  CD C6 E1            		CALL PTDECOD
+     811.  00:E4FF  ED 43 14 F0         		LD [PT3_AdInPtB],BC
+     812.  00:E503                      
+     813.  00:E503  21 78 F0            .PL1C:		LD HL,ChanC+CHNPRM_NtSkCn
+     814.  00:E506  35                  		DEC [HL]
+     815.  00:E507  20 0F               		JR NZ,.PL1D
+     816.  00:E509  DD 21 69 F0         		LD IX,ChanC+12
+     817.  00:E50D  ED 4B 16 F0         		LD BC,[PT3_AdInPtC]
+     818.  00:E511  CD C6 E1            		CALL PTDECOD
+     819.  00:E514  ED 43 16 F0         		LD [PT3_AdInPtC],BC
+     820.  00:E518                      
+     821.  00:E518  3A 1C F0            .PL1D:		LD A,[PT3_Delay]
+     822.  00:E51B  32 7A F0            		LD [DelyCnt],A
+     823.  00:E51E                      
+     824.  00:E51E  DD 21 23 F0         .PL2:		LD IX,ChanA
+     825.  00:E522  2A 40 F1            		LD HL,[AYREGS+AR_TonA]
+     826.  00:E525  CD 36 E3            		CALL CHREGS
+     827.  00:E528  22 40 F1            		LD [AYREGS+AR_TonA],HL
+     828.  00:E52B  3A 4A F1            		LD A,[AYREGS+AR_AmplC]
+     829.  00:E52E  32 48 F1            		LD [AYREGS+AR_AmplA],A
+     830.  00:E531  DD 21 40 F0         		LD IX,ChanB
+     831.  00:E535  2A 42 F1            		LD HL,[AYREGS+AR_TonB]
+     832.  00:E538  CD 36 E3            		CALL CHREGS
+     833.  00:E53B  22 42 F1            		LD [AYREGS+AR_TonB],HL
+     834.  00:E53E  3A 4A F1            		LD A,[AYREGS+AR_AmplC]
+     835.  00:E541  32 49 F1            		LD [AYREGS+AR_AmplB],A
+     836.  00:E544  DD 21 5D F0         		LD IX,ChanC
+     837.  00:E548  2A 44 F1            		LD HL,[AYREGS+AR_TonC]
+     838.  00:E54B  CD 36 E3            		CALL CHREGS
+     839.  00:E54E  22 44 F1            		LD [AYREGS+AR_TonC],HL
+     840.  00:E551                      
+     841.  00:E551  2A 7E F0            		LD HL,[Ns_Base_AddToNs]
+     842.  00:E554  7C                  		LD A,H
+     843.  00:E555  85                  		ADD A,L
+     844.  00:E556  32 46 F1            		LD [AYREGS+AR_Noise],A
+     845.  00:E559                      
+     846.  00:E559  3A 1D F0            		LD A,[PT3_AddToEn]
+     847.  00:E55C  5F                  		LD E,A
+     848.  00:E55D  87                  		ADD A,A
+     849.  00:E55E  9F                  		SBC A,A
+     850.  00:E55F  57                  		LD D,A
+     851.  00:E560  2A 4E F1            		LD HL,[EnvBase]
+     852.  00:E563  19                  		ADD HL,DE
+     853.  00:E564  ED 5B 7B F0         		LD DE,[CurESld]
+     854.  00:E568  19                  		ADD HL,DE
+     855.  00:E569  22 4B F1            		LD [AYREGS+AR_Env],HL
+     856.  00:E56C                      
+     857.  00:E56C  AF                  		XOR A
+     858.  00:E56D  21 7D F0            		LD HL,CurEDel
+     859.  00:E570  B6                  		OR [HL]
+     860.  00:E571  C8                  		RET Z
+     861.  00:E572  35                  		DEC [HL]
+     862.  00:E573  C0                  		RET NZ
+     863.  00:E574  3A 1E F0            		LD A,[PT3_Env_Del]
+     864.  00:E577  77                  		LD [HL],A
+     865.  00:E578  2A 1F F0            		LD HL,[PT3_ESldAdd]
+     866.  00:E57B  19                  		ADD HL,DE
+     867.  00:E57C  22 7B F0            		LD [CurESld],HL
+     868.  00:E57F  C9                  		RET
+     869.  00:E580                      
+     870.  00:E580  AF                  PT3_ROUT:	XOR A
+     871.  00:E581                      	
+     872.  00:E581                      ROUT_A0:	; --- FIXES BITS 6 AND 7 OF MIXER ---
+     873.  00:E581  21 47 F1            		LD	HL,AYREGS+AR_Mixer
+     874.  00:E584  CB FE               		set	7,[hl]
+     875.  00:E586  CB B6               		res	6,[hl]
+     876.  00:E588                      
+     877.  00:E588  0E A0               		LD C,$A0
+     878.  00:E58A  21 40 F1            		LD HL,AYREGS
+     879.  00:E58D  ED 79               .LOUT:		OUT [C],A
+     880.  00:E58F  0C                  		INC C
+     881.  00:E590  ED A3               		OUTI 
+     882.  00:E592  0D                  		DEC C
+     883.  00:E593  3C                  		INC A
+     884.  00:E594  FE 0D               		CP 13
+     885.  00:E596  20 F5               		JR NZ,.LOUT
+     886.  00:E598  ED 79               		OUT [C],A
+     887.  00:E59A  7E                  		LD A,[HL]
+     888.  00:E59B  A7                  		AND A
+     889.  00:E59C  F8                  		RET M
+     890.  00:E59D  0C                  		INC C
+     891.  00:E59E  ED 79               		OUT [C],A
+     892.  00:E5A0  C9                  		RET
+     893.  00:E5A1                      
+     894.  00:E5A1  64                  NT_DATA:	db (T_NEW_0-T1_)*2
+     895.  00:E5A2  2A                  		db TCNEW_0-T_
+     896.  00:E5A3  65                  		db (T_OLD_0-T1_)*2+1
+     897.  00:E5A4  00                  		db TCOLD_0-T_
+     898.  00:E5A5  01                  		db (T_NEW_1-T1_)*2+1
+     899.  00:E5A6  0C                  		db TCNEW_1-T_
+     900.  00:E5A7  01                  		db (T_OLD_1-T1_)*2+1
+     901.  00:E5A8  0C                  		db TCOLD_1-T_
+     902.  00:E5A9  94                  		db (T_NEW_2-T1_)*2
+     903.  00:E5AA  35                  		db TCNEW_2-T_
+     904.  00:E5AB  30                  		db (T_OLD_2-T1_)*2
+     905.  00:E5AC  0E                  		db TCOLD_2-T_
+     906.  00:E5AD  60                  		db (T_NEW_3-T1_)*2
+     907.  00:E5AE  20                  		db TCNEW_3-T_
+     908.  00:E5AF  60                  		db (T_OLD_3-T1_)*2
+     909.  00:E5B0  21                  		db TCOLD_3-T_
+     910.  00:E5B1                      
+     911.  00:E5B1                      T_:
+     912.  00:E5B1                      
+     913.  00:E5B1                      TCOLD_0:	db $00+1,$04+1,$08+1,$0A+1,$0C+1,$0E+1,$12+1,$14+1
+     913.  00:E5B1  01 05 09 0B 0D 0F 13 15 
+     914.  00:E5B9  19 25 3D 00         		db $18+1,$24+1,$3C+1,0
+     915.  00:E5BD                      TCNEW_1:	
+     916.  00:E5BD  5D 00               TCOLD_1:	db $5C+1,0
+     917.  00:E5BF                      TCOLD_2:	db $30+1,$36+1,$4C+1,$52+1,$5E+1,$70+1,$82,$8C,$9C
+     917.  00:E5BF  31 37 4D 53 5F 71 82 8C 9C 
+     918.  00:E5C8                      		db $9E,$A0,$A6,$A8,$AA,$AC,$AE,$AE,0
+     918.  00:E5C8  9E A0 A6 A8 AA AC AE AE 00 
+     919.  00:E5D1  57                  TCNEW_3:	db $56+1
+     920.  00:E5D2                      TCOLD_3:	db $1E+1,$22+1,$24+1,$28+1,$2C+1,$2E+1,$32+1,$BE+1,0
+     920.  00:E5D2  1F 23 25 29 2D 2F 33 BF 00 
+     921.  00:E5DB                      TCNEW_0:	db $1C+1,$20+1,$22+1,$26+1,$2A+1,$2C+1,$30+1,$54+1
+     921.  00:E5DB  1D 21 23 27 2B 2D 31 55 
+     922.  00:E5E3  BD BF 00            		db $BC+1,$BE+1,0
+     923.  00:E5E6                      TCNEW_2:	db $1A+1,$20+1,$24+1,$28+1,$2A+1,$3A+1,$4C+1,$5E+1
+     923.  00:E5E6  1B 21 25 29 2B 3B 4D 5F 
+     924.  00:E5EE  BB BD BF            		db $BA+1,$BC+1,$BE+1
+     925.  00:E5F1                      
+     926.  00:E5F1  00 01 00 90         EMPTYSAMORN: 	db 0,1,0,$90 ;delete $90 if you don't need default sample
+     927.  00:E5F5                      
+     928.  00:E5F5                      T_PACK:		; First 12 values of tone tables (packed)
+     929.  00:E5F5  0D                  		db ($06EC*2)/256
+     930.  00:E5F6  D8                  		db #d8
+     931.  00:E5F7  69                  		db $0755-$06EC
+     932.  00:E5F8  70                  		db $07C5-$0755
+     933.  00:E5F9  76                  		db $083B-$07C5
+     934.  00:E5FA  7D                  		db $08B8-$083B
+     935.  00:E5FB  85                  		db $093D-$08B8
+     936.  00:E5FC  8D                  		db $09CA-$093D
+     937.  00:E5FD  95                  		db $0A5F-$09CA
+     938.  00:E5FE  9D                  		db $0AFC-$0A5F
+     939.  00:E5FF  A8                  		db $0BA4-$0AFC
+     940.  00:E600  B1                  		db $0C55-$0BA4
+     941.  00:E601  BB                  		db $0D10-$0C55
+     942.  00:E602  0C                  		db ($066D*2)/256
+     943.  00:E603  DA                  		db #da
+     944.  00:E604  62                  		db $06CF-$066D
+     945.  00:E605  68                  		db $0737-$06CF
+     946.  00:E606  6D                  		db $07A4-$0737
+     947.  00:E607  75                  		db $0819-$07A4
+     948.  00:E608  7B                  		db $0894-$0819
+     949.  00:E609  83                  		db $0917-$0894
+     950.  00:E60A  8A                  		db $09A1-$0917
+     951.  00:E60B  92                  		db $0A33-$09A1
+     952.  00:E60C  9C                  		db $0ACF-$0A33
+     953.  00:E60D  A4                  		db $0B73-$0ACF
+     954.  00:E60E  AF                  		db $0C22-$0B73
+     955.  00:E60F  B8                  		db $0CDA-$0C22
+     956.  00:E610  0E                  		db ($0704*2)/256
+     957.  00:E611  08                  		db #08
+     958.  00:E612  6A                  		db $076E-$0704
+     959.  00:E613  72                  		db $07E0-$076E
+     960.  00:E614  78                  		db $0858-$07E0
+     961.  00:E615  7E                  		db $08D6-$0858
+     962.  00:E616  86                  		db $095C-$08D6
+     963.  00:E617  90                  		db $09EC-$095C
+     964.  00:E618  96                  		db $0A82-$09EC
+     965.  00:E619  A0                  		db $0B22-$0A82
+     966.  00:E61A  AA                  		db $0BCC-$0B22
+     967.  00:E61B  B4                  		db $0C80-$0BCC
+     968.  00:E61C  BE                  		db $0D3E-$0C80
+     969.  00:E61D  0F                  		db ($07E0*2)/256
+     970.  00:E61E  C0                  		db #c0
+     971.  00:E61F  78                  		db $0858-$07E0
+     972.  00:E620  88                  		db $08E0-$0858
+     973.  00:E621  80                  		db $0960-$08E0
+     974.  00:E622  90                  		db $09F0-$0960
+     975.  00:E623  98                  		db $0A88-$09F0
+     976.  00:E624  A0                  		db $0B28-$0A88
+     977.  00:E625  B0                  		db $0BD8-$0B28
+     978.  00:E626  A8                  		db $0C80-$0BD8
+     979.  00:E627  E0                  		db $0D60-$0C80
+     980.  00:E628  B0                  		db $0E10-$0D60
+     981.  00:E629  E8                  		db $0EF8-$0E10
+     982.  00:E62A                      
+     983.  00:E62A                      
+     984.  00:E62A                      
+     985.  00:E62A                      
+     986.  00:E62A                      
+     987.  00:E62A                      
+     988.  00:E62A                      
+     989.  00:E62A                      
+     990.  00:E62A                      
+     991.  00:E62A                      
+     992.  00:E62A                      
+     993.  00:E62A                      
+     994.  00:E62A                      
+     995.  00:E62A                      	;Variables del replayer... las coloco desde aqui.
+     996.  00:E62A                      	;mirar que hace la directiva MAP del SJASM
+     997.  00:E62A  (F000)              	map		#f000
+     998.  00:E62A                      
+     999.  00:E62A                      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PT3 REPLAYER
+    1000.  00:E62A  (00:F000)           PT3_SETUP:		#1	;set bit0 to 1, if you want to play without looping
+    1001.  00:E62A                      					;bit7 is set each time, when loop point is passed
+    1002.  00:E62A  (00:F001)           PT3_MODADDR:	#2
+    1003.  00:E62A  (00:F003)           PT3_CrPsPtr:		#2
+    1004.  00:E62A  (00:F005)           PT3_SAMPTRS:		#2
+    1005.  00:E62A  (00:F007)           PT3_OrnPtrs:		#2
+    1006.  00:E62A  (00:F009)           PT3_PDSP:		#2
+    1007.  00:E62A  (00:F00B)           PT3_CSP:		#2 
+    1008.  00:E62A  (00:F00D)           PT3_PSP:		#2
+    1009.  00:E62A  (00:F00F)           PT3_PrNote:		#1
+    1010.  00:E62A  (00:F010)           PT3_PrSlide:		#2
+    1011.  00:E62A  (00:F012)           PT3_AdInPtA:		#2
+    1012.  00:E62A  (00:F014)           PT3_AdInPtB:		#2
+    1013.  00:E62A  (00:F016)           PT3_AdInPtC:		#2
+    1014.  00:E62A  (00:F018)           PT3_LPosPtr:		#2
+    1015.  00:E62A  (00:F01A)           PT3_PatsPtr:		#2
+    1016.  00:E62A  (00:F01C)           PT3_Delay:		#1
+    1017.  00:E62A  (00:F01D)           PT3_AddToEn:		#1
+    1018.  00:E62A  (00:F01E)           PT3_Env_Del:		#1
+    1019.  00:E62A  (00:F01F)           PT3_ESldAdd:		#2
+    1020.  00:E62A  (00:F021)           PT3_NTL3:		#2	; AND A / NOP (note table creator)
+    1021.  00:E62A                      
+    1022.  00:E62A  (00:F023)           VARS:			#0
+    1023.  00:E62A                      
+    1024.  00:E62A  (00:F023)           ChanA:			#29			;CHNPRM_Size
+    1025.  00:E62A  (00:F040)           ChanB:			#29			;CHNPRM_Size
+    1026.  00:E62A  (00:F05D)           ChanC:			#29			;CHNPRM_Size
+    1027.  00:E62A                      
+    1028.  00:E62A                      ;GlobalVars
+    1029.  00:E62A  (00:F07A)           DelyCnt:		#1
+    1030.  00:E62A  (00:F07B)           CurESld:		#2
+    1031.  00:E62A  (00:F07D)           CurEDel:		#1
+    1032.  00:E62A  (00:F07E)           Ns_Base_AddToNs:	#0
+    1033.  00:E62A  (00:F07E)           Ns_Base:		#1
+    1034.  00:E62A  (00:F07F)           AddToNs:		#1
+    1035.  00:E62A                      
+    1036.  00:E62A  (00:F080)           NT_:			#192	; Puntero a/tabla de frecuencias
+    1037.  00:E62A                      
+    1038.  00:E62A  (00:F140)           AYREGS:			#0
+    1039.  00:E62A  (00:F140)           VT_:			#14
+    1040.  00:E62A  (00:F14E)           EnvBase:		#2
+    1041.  00:E62A  (00:F150)           VAR0END:		#0
+    1042.  00:E62A                      
+    1043.  00:E62A  (00:F150)           T1_:			#0		
+    1044.  00:E62A  (00:F150)           T_NEW_1:		#0
+    1045.  00:E62A  (00:F150)           T_OLD_1:		#24
+    1046.  00:E62A  (00:F168)           T_OLD_2:		#24
+    1047.  00:E62A  (00:F180)           T_NEW_3:		#0
+    1048.  00:E62A  (00:F180)           T_OLD_3:		#2
+    1049.  00:E62A  (00:F182)           T_OLD_0:		#0
+    1050.  00:E62A  (00:F182)           T_NEW_0:		#24
+    1051.  00:E62A  (00:F19A)           T_NEW_2:		#166
+    1052.  00:E62A                      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PT3 REPLAYER END
+      40   00:E62A                      SONG:
+      41   00:E62A  (01DE)              	incbin "./src/song.pt3"			;musica de ejemplo
+      42   00:E808                      
+      43   00:E808  00                  contador: db 0
+      44   00:E809                      
+      45   00:E809                      FINAL:
+      46   00:E809                      
+      47   00:E809                      
+      48   00:E809                      
+      49   00:E809                      
+      50   00:E809                      
+      51   00:E809                      
+      52   00:E809                      
+      53   00:E809                      
+      54   00:E809                      
+      55   00:E809                      
+      56   00:E809                      
+
+    LABELS
+-------------------------------------------------
+00:0000E000   INICIO
+00:0000E000 X inicilizar_tracker
+00:0000E009 X reproducir_bloque_musica
+00:0000E013 X para_cancion
+00:0000E017 X evitar_repeticion_cancion
+00:0000E01E X tracker
+00:00000000   CHNPRM_PsInOr
+00:00000001   CHNPRM_PsInSm
+00:00000002   CHNPRM_CrAmSl
+00:00000003   CHNPRM_CrNsSl
+00:00000004   CHNPRM_CrEnSl
+00:00000005   CHNPRM_TSlCnt
+00:00000006   CHNPRM_CrTnSl
+00:00000008   CHNPRM_TnAcc
+00:0000000A   CHNPRM_COnOff
+00:0000000B   CHNPRM_OnOffD
+00:0000000C   CHNPRM_OffOnD
+00:0000000D   CHNPRM_OrnPtr
+00:0000000F   CHNPRM_SamPtr
+00:00000011   CHNPRM_NNtSkp
+00:00000012   CHNPRM_Note
+00:00000013   CHNPRM_SlToNt
+00:00000014   CHNPRM_Env_En
+00:00000015   CHNPRM_Flags
+00:00000016   CHNPRM_TnSlDl
+00:00000017   CHNPRM_TSlStp
+00:00000019   CHNPRM_TnDelt
+00:0000001B   CHNPRM_NtSkCn
+00:0000001C   CHNPRM_Volume
+00:0000001D X CHNPRM_Size
+00:00000000   AR_TonA
+00:00000002   AR_TonB
+00:00000004   AR_TonC
+00:00000006   AR_Noise
+00:00000007   AR_Mixer
+00:00000008   AR_AmplA
+00:00000009   AR_AmplB
+00:0000000A   AR_AmplC
+00:0000000B   AR_Env
+00:0000000D   AR_EnvTp
+00:0000E01E   CHECKLP
+00:0000E02F   PT3_MUTE
+00:0000E03B   PT3_INIT
+00:0000E07A   PT3_INIT.TP_0
+00:0000E086   PT3_INIT.TP_1
+00:0000E08D   PT3_INIT.TP_2
+00:0000E0FB   PT3_INIT.L1
+00:0000E108   PT3_INIT.L2
+00:0000E10C X PT3_INIT.L3
+00:0000E133   PT3_INIT.CORR_1
+00:0000E141   PT3_INIT.CORR_2
+00:0000E148   PT3_INIT.TC_EXIT
+00:0000E153   PT3_INIT.INITV1
+00:0000E15B   PT3_INIT.INITV2
+00:0000E16F   PT3_INIT.INITV3
+00:0000E173   PD_OrSm
+00:0000E17D   PD_SAM
+00:0000E17E   PD_SAM_
+00:0000E194   PD_VOL
+00:0000E19D   PD_EOff
+00:0000E1A5   PD_SorE
+00:0000E1AF   PD_ENV
+00:0000E1B4   PD_ORN
+00:0000E1B9   PD_ESAM
+00:0000E1C6   PTDECOD
+00:0000E1D5   PD_LOOP
+00:0000E1D8   PD_LP2
+00:0000E205   PD_NOIS
+00:0000E20A   PD_REL
+00:0000E210   PD_NOTE
+00:0000E218   PD_RES
+00:0000E22A   PD_FIN
+00:0000E231   C_PORTM
+00:0000E27C   C_PORTM.NOSIG
+00:0000E286   SET_STP
+00:0000E292   C_GLISS
+00:0000E2A5   C_SMPOS
+00:0000E2AB   C_ORPOS
+00:0000E2B1   C_VIBRT
+00:0000E2C9   C_ENGLS
+00:0000E2DB   C_DELAY
+00:0000E2E1   SETENV
+00:0000E2FC   C_NOP
+00:0000E2FD   SETORN
+00:0000E316   SPCCOMS
+00:0000E336   CHREGS
+00:0000E359   CHREGS.CH_ORPS
+00:0000E364   CHREGS.CH_NTP
+00:0000E36A   CHREGS.CH_NOK
+00:0000E385   CHREGS.CH_SMPS
+00:0000E39B   CHREGS.CH_NOAC
+00:0000E3E2   CHREGS.CH_STPP
+00:0000E3F7   CHREGS.CH_AMP
+00:0000E409   CHREGS.CH_AMIN
+00:0000E40E   CHREGS.CH_SVAM
+00:0000E411   CHREGS.CH_NOAM
+00:0000E41A   CHREGS.CH_APOS
+00:0000E420   CHREGS.CH_VOL
+00:0000E42B X CHREGS.CH_ENV
+00:0000E432   CHREGS.CH_NOEN
+00:0000E44C   CHREGS.NO_ENAC
+00:0000E453   CHREGS.NO_ENSL
+00:0000E461   CHREGS.CH_MIX
+00:0000E465   CHREGS.CH_EXIT
+00:0000E484   CHREGS.CH_ONDL
+00:0000E488   PT3_PLAY
+00:0000E4BC   PT3_PLAY.PLNLP
+00:0000E4E3   PT3_PLAY.PL1A
+00:0000E4EE   PT3_PLAY.PL1B
+00:0000E503   PT3_PLAY.PL1C
+00:0000E518   PT3_PLAY.PL1D
+00:0000E51E   PT3_PLAY.PL2
+00:0000E580   PT3_ROUT
+00:0000E581   ROUT_A0
+00:0000E58D   ROUT_A0.LOUT
+00:0000E5A1   NT_DATA
+00:0000E5B1   T_
+00:0000E5B1   TCOLD_0
+00:0000E5BD   TCNEW_1
+00:0000E5BD   TCOLD_1
+00:0000E5BF   TCOLD_2
+00:0000E5D1   TCNEW_3
+00:0000E5D2   TCOLD_3
+00:0000E5DB   TCNEW_0
+00:0000E5E6   TCNEW_2
+00:0000E5F1   EMPTYSAMORN
+00:0000E5F5   T_PACK
+00:0000F000   PT3_SETUP
+00:0000F001   PT3_MODADDR
+00:0000F003   PT3_CrPsPtr
+00:0000F005   PT3_SAMPTRS
+00:0000F007   PT3_OrnPtrs
+00:0000F009   PT3_PDSP
+00:0000F00B   PT3_CSP
+00:0000F00D   PT3_PSP
+00:0000F00F   PT3_PrNote
+00:0000F010   PT3_PrSlide
+00:0000F012   PT3_AdInPtA
+00:0000F014   PT3_AdInPtB
+00:0000F016   PT3_AdInPtC
+00:0000F018   PT3_LPosPtr
+00:0000F01A   PT3_PatsPtr
+00:0000F01C   PT3_Delay
+00:0000F01D   PT3_AddToEn
+00:0000F01E   PT3_Env_Del
+00:0000F01F   PT3_ESldAdd
+00:0000F021   PT3_NTL3
+00:0000F023   VARS
+00:0000F023   ChanA
+00:0000F040   ChanB
+00:0000F05D   ChanC
+00:0000F07A   DelyCnt
+00:0000F07B   CurESld
+00:0000F07D   CurEDel
+00:0000F07E   Ns_Base_AddToNs
+00:0000F07E   Ns_Base
+00:0000F07F   AddToNs
+00:0000F080   NT_
+00:0000F140   AYREGS
+00:0000F140   VT_
+00:0000F14E   EnvBase
+00:0000F150   VAR0END
+00:0000F150   T1_
+00:0000F150   T_NEW_1
+00:0000F150   T_OLD_1
+00:0000F168   T_OLD_2
+00:0000F180   T_NEW_3
+00:0000F180   T_OLD_3
+00:0000F182   T_OLD_0
+00:0000F182   T_NEW_0
+00:0000F19A   T_NEW_2
+00:0000E62A   SONG
+00:0000E808 X contador
+00:0000E809   FINAL
+
+
+ Output: src/music.out
+-------------------------------------------------
+
+ Page: 00
+  Org: 0000E000  Size: *  Used: 00000000
+
+    No output
+
+ Output: music.bin
+-------------------------------------------------
+
+ Page: 00
+  Org: 0000E000  Size: *  Used: 00000810
+
+   Address   Length Align   Label
+   0000E000    2064         INICIO

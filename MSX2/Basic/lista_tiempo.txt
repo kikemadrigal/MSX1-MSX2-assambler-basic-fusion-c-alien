@@ -1,0 +1,16 @@
+Inicio
+------
+|_____Carga pantalla de carga, directo de disco a VRAM con bload()
+|_____Definición datas sprites en RAM
+|_____Carga de datas de sprite en VRAM
+|_____Definición de datas de gráficos en RAM con draw(), circle(), line()
+|_____Carga de mapa de pantallas en RAM
+|_____Inicialización máquina
+|_____Dibujado de pantalla 1 en page 0
+|_____Inicialicación rutina de tiempo con interrupciones
+|_____Inicialización variables personaje y pantalla 0
+|_____Captura de teclas
+        |_____Actualizar player
+        |_____Actualizar enemigos
+        |_____Comprobar que pantalla haya cambiado
+|_____Pantalla final

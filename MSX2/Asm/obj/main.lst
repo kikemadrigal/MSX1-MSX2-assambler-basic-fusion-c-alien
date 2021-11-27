@@ -1,0 +1,481 @@
+Sjasm Z80 Assembler v0.42c - www.xl2s.tk             [2020.12.09 - 08:11:55]
+
+obj\main.as
+Errors: 0
+
+       1   00:0000                              output "main.rom"   ; debemos de poner esta instrucción o nos generaría un archivo.out, ponle espacios al principio
+       2   00:4000                              
+       3   00:4000                      		org		0x4000
+       4   00:4000  41 42               		byte "AB"
+       5   00:4002  10 40               		word BEGIN
+       6   00:4004                      		word 0,0,0,0,0,0
+       6   00:4004  00 00 00 00 00 00 00 00 00 00 00 00 
+       7   00:4010                      
+       8   00:4010                      
+       9   00:4010                      
+      10   00:4010                      BEGIN:
+      11   00:4010                      	;	di
+      12   00:4010                      	;	im 		1
+      13   00:4010                      	;	ld 		sp,#F380
+      14   00:4010  CD 41 40                call inicializar_pantalla
+      15   00:4013  CD 60 40                call cargar_tiles_colores_y_mapa_en_VRAM
+      16   00:4016  CD 28 40                call inicializar_entidades
+      17   00:4019  CD 24 40                call cargar_sprites
+      18   00:401C                      
+      19   00:401C                          
+      20   00:401C                      .loop
+      21   00:401C                      ;[3] halt
+      22   00:401C  CD 2F 40                call input_system
+      23   00:401F  CD 14 AC                call poner_sprite_player_atributos_en_VRAM
+      24   00:4022  18 F8                   jr .loop ; se queda en un bucle infinito
+      25   00:4024                        
+      26   00:4024                           
+      27   00:4024                      
+      28   00:4024                      cargar_sprites:
+      29   00:4024  CD 07 AC                call poner_sprites_player_en_VRAM
+      30   00:4027  C9                      ret
+      31   00:4028                      inicializar_entidades:
+      32   00:4028  CD F2 AB                call inicializacion_variables_player_sprite
+      33   00:402B  CD 14 AC                call poner_sprite_player_atributos_en_VRAM
+      34   00:402E  C9                      ret   
+      35   00:402F                      
+      36   00:402F                      
+      37   00:402F                      input_system:
+      38   00:402F  F3                      di
+      39   00:4030  3E 00                   ld a,0
+      40   00:4032  CD D5 00                call GTSTCK
+      41   00:4035                          
+      42   00:4035                          ;cp 1
+      43   00:4035                          ;jp z, saltar_player
+      44   00:4035  FE 03                   cp 3
+      45   00:4037  CA 21 AC                jp z, mover_player_derecha
+      46   00:403A  FE 07                   cp 7
+      47   00:403C  CA 2A AC                jp z, mover_player_izquierda
+      48   00:403F  FB                      ei
+      49   00:4040                      
+      50   00:4040  C9                      ret
+      51   00:4041                      
+      52   00:4041                      	  
+      53   00:4041                      include "bios.as"
+       1.  00:4041                      ;Rutinas bios http://map.grauw.nl/resources/msxbios.php
+       2.  00:4041                      ;Console routines
+       3.  00:4041  (00:00A2)           CHPUT equ #00A2  ; Escribe un caracter en la pantalla
+       4.  00:4041  (00:009F)           CHGET equ #009F    ; Se queda esperando que se pulse una tecla   
+       5.  00:4041                      ;VDP routines
+       6.  00:4041  (00:0041)           DISSCR equ #0041   ; deshabilita la pantalla
+       7.  00:4041  (00:0044)           ENASCR equ #0044   ; Habilita la pantalla
+       8.  00:4041  (00:0047)           WRTVDP equ #0047   ; Escribe los datos en los registros del VDP, necesita b=datos, c= numero de registro a modificar   
+       9.  00:4041  (00:004D)           WRTVRM equ #004D   ; Escribe datos en VRAM, necesita en HL=la dirección VRAM, a=valor       
+      10.  00:4041  (00:005F)           CHGMOD equ #005F   ; Cambia el modo de screen pero previamente necesita que se le asigne el modo en el registro a
+      11.  00:4041  (00:005C)           LDIRVM equ #005C   ; Tansfiere bloques de la RAM a la VRAM, es la más importante, necesita previamente asignar valor al registro bc con la longitud, dc con la dirección de inicio de la VRAM y hl con la dirección de inicio de la RAM:
+      12.  00:4041  (00:0062)           CHGCLR equ #0062   ; esta rutina necesita que se acceda 1a las constanes de FORCLR,BAKCLR y BDRCLR con un ld,hl(FORCLR) obtenemos su posición
+      13.  00:4041                      ;Constantes bios
+      14.  00:4041  (00:F3E9)           FORCLR equ 0xF3E9 ; Contiene el color de tinta (+1=color del fondo, +1 color del borde)
+      15.  00:4041  (00:F3EA)           BAKCLR equ 0xF3EA ; Contiene el color de fondo o de la página
+      16.  00:4041  (00:F3EB)           BDRCLR equ 0xF3EB ; Contiene el colot del borde
+      17.  00:4041                      
+      18.  00:4041  (00:00D5)           GTSTCK equ #00D5   ;si le pasas al registro a un 0 detectará los cursores,un 1 para el joystick 1 y 2 para el joystick 2
+      19.  00:4041                                         ;devuelve en a 1 arriba, 2 diagonal arriba derecha,3 derecha, asi hasta 7
+      20.  00:4041  (00:00D8)           GTTRIG equ #00D8 ;necesita en a el boton a comprobar 0 espacio,1 boton A joystick 1, 3 boton b joystick 1, devuelve en a #00 si ha sido pulsado o #FF si no ha sido pulsado
+      21.  00:4041                           
+      22.  00:4041  (00:013E)           RDVDP equ #013E ;   lee  registro de lectura del VDP y lo pone en el registro a
+      23.  00:4041                      
+      24.  00:4041                      
+      25.  00:4041  (00:F3DB)           CLIKSW  equ 0xF3DB; para que no se oiga el click que hace al pulsar las teclas
+      26.  00:4041                      ; registros VDP MSX 1
+      27.  00:4041  (00:F3DF)           RG0SAV equ	#F3DF   ; Registor 0
+      28.  00:4041  (00:F3E0)           RG1SAV equ	#F3E0	; Registro 1
+      29.  00:4041  (00:F3E1)           RG2SAV equ	#F3E1	; Registor 2
+      30.  00:4041  (00:F3E2)           RG3SAV equ	#F3E2	; Registro 3
+      31.  00:4041  (00:F3E3)           RG4SAV equ	#F3E3	; Registro 4
+      32.  00:4041  (00:F3E4)           RG5SAV equ	#F3E4	; Registro 5
+      33.  00:4041  (00:F3E5)           RG6SAV equ	#F3E5	; Registro 6
+      34.  00:4041  (00:F3E6)           RG7SAV equ	#F3E6	; Registro 7
+      35.  00:4041  (00:F3E7)           STATFL equ	#F3E7	; Registro de estado VSP MSX 1 
+      36.  00:4041                      
+      37.  00:4041                      
+      38.  00:4041                      ;Constantes del programa
+      39.  00:4041  (00:000A)           MAXDELAY equ 10
+      40.  00:4041                      
+      41.  00:4041  (00:C000)           STRUCTURA_COPY_HMMM	equ	#C000
+      54   00:4041                      include "screen.as"
+       1.  00:4041                      inicializar_pantalla:
+       2.  00:4041                          ; Vamos a cambiar los colores
+       3.  00:4041  21 E9 F3            	ld hl,FORCLR ; Forclr es una constante que contiene la dirección de la memoria donde está el color de la tinta
+       4.  00:4044  36 0F               	ld (hl),15 ; le poneos el 1 en tinta que es negra
+       5.  00:4046                      
+       6.  00:4046  23                  	inc hl ;incrmeentamos 1 para leer el valor de la constante BAKCLR
+       7.  00:4047  36 01               	ld (hl),1 ; le metemos 1 en fondo que es el negro
+       8.  00:4049                      
+       9.  00:4049  23                  	inc	hl ; Incrementamos en 1 para leer el valor de la constante BDRCLR
+      10.  00:404A  36 01               	ld	(hl),1 ;en borde también el negro
+      11.  00:404C                      
+      12.  00:404C  CD 62 00            	call CHGCLR ;Aplicamos los valores establecidos en FORCLR,BAKCLR,BDRCLR
+      13.  00:404F                      
+      14.  00:404F                          ;Cambiamos el modo de pantalla
+      15.  00:404F  3E 05                   ld  a,5     ; La rutina CHGMOD nos obliga a poner en el registro a el modo de pantalla que queremos 
+      16.  00:4051  CD 5F 00                call CHGMOD ; Mira arriba, pone la explicación, pone screen 2 y sprite de 16 sin apliar
+      17.  00:4054                      
+      18.  00:4054  3A E0 F3                ld a,(RG1SAV) ;en esta dirección está el valor del el 1 registro de soo escritura del VDP, en el se controla el tamaño de los sprites
+      19.  00:4057  F6 02                   or 00000010b ;vamos a obligarle a que trabaje con los sprites de 16 pixeles
+      20.  00:4059                      
+      21.  00:4059  47                      ld b,a 
+      22.  00:405A  0E 01                   ld c,1
+      23.  00:405C  CD 47 00                call WRTVDP ;rutina que es escribe el valor en el reistro de solo escritura indicado previamente en c con el valor de a
+      24.  00:405F                      
+      25.  00:405F  C9                      ret
+      26.  00:4060                      
+      27.  00:4060                      
+      28.  00:4060                      cargar_tiles_colores_y_mapa_en_VRAM:
+      29.  00:4060                      ;Tileset
+      30.  00:4060                          ;screen1 es el splash_screen o pantalla incial con la foto de presentación
+      31.  00:4060  AF                      xor a
+      32.  00:4061  21 00 00                ld hl, #0000 ; la rutina LDIRVM necesita haber cargado previamente la dirección de inicio de la RAM, para saber porqué he puesto 0000 fíjate este dibujo https://sites.google.com/site/multivac7/files-images/TMS9918_VRAMmap_G2_300dpi.png ,así es como está formado el VDP en screen 2
+      33.  00:4064  CD 7C 40                call SetVdp_Write
+      34.  00:4067                          ;La rutina esta rutina SetVdp_Writede graw: http://map.grauw.nl/articles/vdp_tut.php
+      35.  00:4067                          ; necesita que en a=la primera parte de la dirección y en hl=la segunda parte
+      36.  00:4067                          ; en el caso de &h8000, en a iría 0 y en hl=8000
+      37.  00:4067  AF                      xor a
+      38.  00:4068  21 AE 40                ld hl, tileset+8
+      39.  00:406B  11 F9 95                ld de, tileset-final_tileset
+      40.  00:406E  CD 72 40                call mandar_datos    
+      41.  00:4071  C9                      ret
+      42.  00:4072                      mandar_datos:
+      43.  00:4072  7E                      ld		a,[hl]							;leemos el dato
+      44.  00:4073  D3 98                   out 	[#98],a							;lo mandamos a VRAM
+      45.  00:4075  23                      inc		hl								;preparate para leer el siguiente dato de la rom
+      46.  00:4076  1B                      dec		de								;un byte menos que leer
+      47.  00:4077  7A                      ld		a,d
+      48.  00:4078  B3                      or		e								;miramos si DE es cero para terminar
+      49.  00:4079  20 F7                   jr.		nz,mandar_datos
+      50.  00:407B  C9                      ret
+      51.  00:407C                          ;esta rutina necesita que en a=la segunda parte de la dirección y en hl=la primera parte
+      52.  00:407C                          ; en el caso de &h8000, en a hiría 0 y en hl=8000
+      53.  00:407C                      SetVdp_Write:
+      54.  00:407C  CB 04                   rlc h
+      55.  00:407E  17                      rla
+      56.  00:407F  CB 04                   rlc h
+      57.  00:4081  17                      rla
+      58.  00:4082  CB 3C                   srl h
+      59.  00:4084  CB 3C                   srl h
+      60.  00:4086  F3                      di
+      61.  00:4087  D3 99                   out (#99),a
+      62.  00:4089  3E 8E                   ld a,14 + 128
+      63.  00:408B  D3 99                   out (#99),a
+      64.  00:408D  7D                      ld a,l
+      65.  00:408E  00                      nop
+      66.  00:408F  D3 99                   out (#99),a
+      67.  00:4091  7C                      ld a,h
+      68.  00:4092  F6 40                   or 64
+      69.  00:4094                          ;ei				;no activamos interrupciones
+      70.  00:4094  D3 99                   out (#99),a
+      71.  00:4096  C9                      ret
+      72.  00:4097                      
+      73.  00:4097                      
+      74.  00:4097                      init_COMMAND_HMMM:
+      75.  00:4097  00 00 00 01         	DW	0,256											;sx,sy
+      76.  00:409B  64 00 64 00         	DW	100,100											;dx,dy	
+      77.  00:409F  1C 00 2F 00         	DW	28,47											;nx,ny
+      78.  00:40A3  00 00 D0            	DB	0,0,#D0											;HMMM IMP
+      79.  00:40A6                      
+      80.  00:40A6                      ; Es posible incluir estos datos como archivos binarios
+      81.  00:40A6                      ; Si eliges comprimirlos con pletter, tendrás que icluirlo "include "src/PL_VRAM_Depack.asm", crear un buffer "buffer_de_colsiones: ds 768  y poner "call unpack"
+      82.  00:40A6                      tileset:
+      83.  00:40A6  (6A07)                  incbin "../bin/tileset.bin"
+      84.  00:AAAD                      final_tileset:
+      85.  00:AAAD                      ; color_screen1:
+      86.  00:AAAD                      ;     incbin "src/screens/screen1/screen1.tileset.clr.plet5"
+      87.  00:AAAD                      ; map_screen1: 
+      88.  00:AAAD                      ;     incbin "src/screens/screen1/screen1.tileset.map.plet5"
+      89.  00:AAAD                      
+      90.  00:AAAD                      
+      91.  00:AAAD                      
+      92.  00:AAAD                          
+      93.  00:AAAD                      
+      94.  00:AAAD                      
+      95.  00:AAAD                      
+      96.  00:AAAD                      
+      97.  00:AAAD                      
+      98.  00:AAAD                      
+      99.  00:AAAD                      
+     100.  00:AAAD                      
+     101.  00:AAAD                      
+     102.  00:AAAD                      
+     103.  00:AAAD                      
+     104.  00:AAAD                      
+     105.  00:AAAD                      
+     106.  00:AAAD                      
+     107.  00:AAAD                      
+      55   00:AAAD                      include "player.as"
+       1.  00:AAAD                      sprites_player:
+       2.  00:AAAD                          ; 'Personaje parte superior 1 derecha'
+       3.  00:AAAD                          db 3,7,6,7,1,7,29,57
+       3.  00:AAAD  03 07 06 07 01 07 1D 39 
+       4.  00:AAB5                          db 60,31,7,1,12,14,6,6
+       4.  00:AAB5  3C 1F 07 01 0C 0E 06 06 
+       5.  00:AABD                          db 192,64,0,0,128,160,160,128
+       5.  00:AABD  C0 40 00 00 80 A0 A0 80 
+       6.  00:AAC5                          db 0,0,128,204,0,192,224,224
+       6.  00:AAC5  00 00 80 CC 00 C0 E0 E0 
+       7.  00:AACD                          ; 'Personaje parte superior 2 derecha'
+       8.  00:AACD                          db 0,0,1,1,0,0,1,1
+       8.  00:AACD  00 00 01 01 00 00 01 01 
+       9.  00:AAD5                          db 0,0,0,0,0,0,0,0
+       9.  00:AAD5  00 00 00 00 00 00 00 00 
+      10.  00:AADD                          db 0,192,224,192,0,64,224,240
+      10.  00:AADD  00 C0 E0 C0 00 40 E0 F0 
+      11.  00:AAE5                          db 216,0,3,0,0,0,0,0
+      11.  00:AAE5  D8 00 03 00 00 00 00 00 
+      12.  00:AAED                          ; 'Personaje piernas 1 derecha'
+      13.  00:AAED                          db 7,14,14,14,14,28,28,2
+      13.  00:AAED  07 0E 0E 0E 0E 1C 1C 02 
+      14.  00:AAF5                          db 30,28,60,56,48,112,120,252
+      14.  00:AAF5  1E 1C 3C 38 30 70 78 FC 
+      15.  00:AAFD                          db 224,112,120,56,56,56,48,56
+      15.  00:AAFD  E0 70 78 38 38 38 30 38 
+      16.  00:AB05                          db 56,8,56,48,56,24,60,63
+      16.  00:AB05  38 08 38 30 38 18 3C 3F 
+      17.  00:AB0D                          ; 'Personaje piernas 2 derecha'
+      18.  00:AB0D                          db 7,14,15,15,7,7,7,7
+      18.  00:AB0D  07 0E 0F 0F 07 07 07 07 
+      19.  00:AB15                          db 7,7,7,95,127,97,51,7
+      19.  00:AB15  07 07 07 5F 7F 61 33 07 
+      20.  00:AB1D                          db 192,112,112,48,176,176,240,224
+      20.  00:AB1D  C0 70 70 30 B0 B0 F0 E0 
+      21.  00:AB25                          db 192,192,128,128,128,128,128,224
+      21.  00:AB25  C0 C0 80 80 80 80 80 E0 
+      22.  00:AB2D                          ; 'Arma derecha'
+      23.  00:AB2D                          db 15,112,255,127,31,4,28,16
+      23.  00:AB2D  0F 70 FF 7F 1F 04 1C 10 
+      24.  00:AB35                          db 16,0,0,0,0,0,0,0
+      24.  00:AB35  10 00 00 00 00 00 00 00 
+      25.  00:AB3D                          db 128,224,255,247,128,0,0,0
+      25.  00:AB3D  80 E0 FF F7 80 00 00 00 
+      26.  00:AB45                          db 0,0,0,0,0,0,0,0
+      26.  00:AB45  00 00 00 00 00 00 00 00 
+      27.  00:AB4D                          ; 'Personaje parte superior 1 izquierda'
+      28.  00:AB4D                          db 3,2,0,0,1,5,5,1
+      28.  00:AB4D  03 02 00 00 01 05 05 01 
+      29.  00:AB55                          db 0,0,1,51,0,3,7,7
+      29.  00:AB55  00 00 01 33 00 03 07 07 
+      30.  00:AB5D                          db 192,224,96,224,128,224,184,156
+      30.  00:AB5D  C0 E0 60 E0 80 E0 B8 9C 
+      31.  00:AB65                          db 60,248,224,128,48,112,96,96
+      31.  00:AB65  3C F8 E0 80 30 70 60 60 
+      32.  00:AB6D                          ; 'Personaje parte superior 2 izquierda'
+      33.  00:AB6D                          db 0,3,7,3,0,2,7,15
+      33.  00:AB6D  00 03 07 03 00 02 07 0F 
+      34.  00:AB75                          db 27,0,192,0,0,0,0,0
+      34.  00:AB75  1B 00 C0 00 00 00 00 00 
+      35.  00:AB7D                          db 0,0,128,128,0,0,128,128
+      35.  00:AB7D  00 00 80 80 00 00 80 80 
+      36.  00:AB85                          db 0,0,0,0,0,0,0,0
+      36.  00:AB85  00 00 00 00 00 00 00 00 
+      37.  00:AB8D                          ; 'Personaje piernas 1 izquierda'
+      38.  00:AB8D                          db 7,14,30,28,28,28,12,28
+      38.  00:AB8D  07 0E 1E 1C 1C 1C 0C 1C 
+      39.  00:AB95                          db 28,16,28,12,28,24,60,252
+      39.  00:AB95  1C 10 1C 0C 1C 18 3C FC 
+      40.  00:AB9D                          db 224,112,112,112,112,56,56,64
+      40.  00:AB9D  E0 70 70 70 70 38 38 40 
+      41.  00:ABA5                          db 120,56,60,28,12,14,30,63
+      41.  00:ABA5  78 38 3C 1C 0C 0E 1E 3F 
+      42.  00:ABAD                          ; 'Personaje piernas 2 izquierda'
+      43.  00:ABAD                          db 3,14,14,12,13,13,15,7
+      43.  00:ABAD  03 0E 0E 0C 0D 0D 0F 07 
+      44.  00:ABB5                          db 3,3,1,1,1,1,1,7
+      44.  00:ABB5  03 03 01 01 01 01 01 07 
+      45.  00:ABBD                          db 224,112,240,240,224,224,224,224
+      45.  00:ABBD  E0 70 F0 F0 E0 E0 E0 E0 
+      46.  00:ABC5                          db 224,224,224,250,254,134,204,224
+      46.  00:ABC5  E0 E0 E0 FA FE 86 CC E0 
+      47.  00:ABCD                          ; 'Arma izquierda'
+      48.  00:ABCD                          db 1,7,255,239,1,0,0,0
+      48.  00:ABCD  01 07 FF EF 01 00 00 00 
+      49.  00:ABD5                          db 0,0,0,0,0,0,0,0
+      49.  00:ABD5  00 00 00 00 00 00 00 00 
+      50.  00:ABDD                          db 240,14,255,254,248,32,56,8
+      50.  00:ABDD  F0 0E FF FE F8 20 38 08 
+      51.  00:ABE5                          db 8,0,0,0,0,0,0,0
+      51.  00:ABE5  08 00 00 00 00 00 00 00 
+      52.  00:ABED                      ;posición x, poisición y, patrón, color
+      53.  00:ABED  00                  posicion_y: db 0
+      54.  00:ABEE  00                  posicion_x: db 0
+      55.  00:ABEF  00                  patron: db 0
+      56.  00:ABF0  00                  color: db 0
+      57.  00:ABF1  00                  anda: db 0
+      58.  00:ABF2                      
+      59.  00:ABF2                      
+      60.  00:ABF2                      inicializacion_variables_player_sprite:
+      61.  00:ABF2  3E 90                   ld a,18*8 
+      62.  00:ABF4  32 ED AB                ld (posicion_y),a
+      63.  00:ABF7  3E 0A                   ld a,10 
+      64.  00:ABF9  32 EE AB                ld (posicion_x),a
+      65.  00:ABFC  3E 00                   ld a, 0
+      66.  00:ABFE  32 EF AB                ld (patron),a
+      67.  00:AC01  3E 01                   ld a, 1 ; el 13 es el color rosa
+      68.  00:AC03  32 F0 AB                ld (color),a
+      69.  00:AC06  C9                      ret
+      70.  00:AC07                      
+      71.  00:AC07                      poner_sprites_player_en_VRAM:
+      72.  00:AC07  21 AD AA                ld hl, sprites_player
+      73.  00:AC0A  11 00 78                ld de, 30720; #7800
+      74.  00:AC0D  01 40 01                ld bc, 32*10 
+      75.  00:AC10  CD 5C 00                call  LDIRVM 
+      76.  00:AC13  C9                      ret
+      77.  00:AC14                      
+      78.  00:AC14                      ;Update player
+      79.  00:AC14                      poner_sprite_player_atributos_en_VRAM:
+      80.  00:AC14                          ;atributo 0, el tronco superior
+      81.  00:AC14  21 ED AB                ld hl, posicion_y ; la rutina LDIRVM necesita haber cargado previamente la dirección de inicio de la RAM, para saber porqué he puesto 0000 fíjate este dibujo https://sites.google.com/site/multivac7/files-images/TMS9918_VRAMmap_G2_300dpi.png ,así es como está formado el VDP en screen 2
+      82.  00:AC17  11 00 76                ld de, 30208; #7600, la rutina necesita haber cargado previamente con de la dirección de inicio de la VRAM          
+      83.  00:AC1A  01 04 00                ld bc,4; bytes
+      84.  00:AC1D  CD 5C 00                call  LDIRVM ; Mira arriba, pone la explicación
+      85.  00:AC20                          ;--------------sprite 1 tronco superior-----------
+      86.  00:AC20                          ; ;Metemos la y
+      87.  00:AC20                          ; ld hl,30216;&h#1b04
+      88.  00:AC20                          ; ld a,(posicion_y)
+      89.  00:AC20                          ; call WRTVRM
+      90.  00:AC20                          ; ;Metemos la x
+      91.  00:AC20                          ; ld hl,30217
+      92.  00:AC20                          ; ld a,(posicion_x)
+      93.  00:AC20                          ; call WRTVRM
+      94.  00:AC20                          ; ;Metemos el plano
+      95.  00:AC20                          ; ld hl,30218
+      96.  00:AC20                          ; ld a,4
+      97.  00:AC20                          ; call WRTVRM
+      98.  00:AC20                          ; ;Metemos el color
+      99.  00:AC20                          ; ld hl,30219
+     100.  00:AC20                          ; ld a,10
+     101.  00:AC20                          ; call WRTVRM
+     102.  00:AC20                          ; ;--------------sprite 2 piernas-----------
+     103.  00:AC20                          ; ;Metemos la y
+     104.  00:AC20                          ; ld hl,29704
+     105.  00:AC20                          ; ld a,(posicion_y)
+     106.  00:AC20                          ; add 16
+     107.  00:AC20                          ; call WRTVRM
+     108.  00:AC20                          ; ;Metemos la x
+     109.  00:AC20                          ; ld hl,29705
+     110.  00:AC20                          ; ld a,(posicion_x)
+     111.  00:AC20                          ; call WRTVRM
+     112.  00:AC20                          ; ;Metemos el plano
+     113.  00:AC20                          ; ld hl, 29706
+     114.  00:AC20                          ; ld a,8
+     115.  00:AC20                          ; call WRTVRM
+     116.  00:AC20                          ; ;Metemos el color
+     117.  00:AC20                          ; ld hl, 29707
+     118.  00:AC20                          ; ld a,13
+     119.  00:AC20                          ; call WRTVRM
+     120.  00:AC20                          ; ;--------------sprite 3 arma-----------
+     121.  00:AC20                          ; ;Metemos la y
+     122.  00:AC20                          ; ld hl, 29708
+     123.  00:AC20                          ; ld a,(posicion_y)
+     124.  00:AC20                          ; add 8
+     125.  00:AC20                          ; call WRTVRM
+     126.  00:AC20                          ; ;Metemos la x
+     127.  00:AC20                          ; ld hl, 29709
+     128.  00:AC20                          ; ld a,(posicion_x)
+     129.  00:AC20                          ; call WRTVRM
+     130.  00:AC20                          ; ;Metemos el plano
+     131.  00:AC20                          ; ld hl, 29710
+     132.  00:AC20                          ; ld a,16
+     133.  00:AC20                          ; call WRTVRM
+     134.  00:AC20                          ; ;Metemos el color
+     135.  00:AC20                          ; ld hl, 29711
+     136.  00:AC20                          ; ld a,15
+     137.  00:AC20                          ; call WRTVRM
+     138.  00:AC20                      
+     139.  00:AC20  C9                      ret
+     140.  00:AC21                      
+     141.  00:AC21                      
+     142.  00:AC21                          ;---------------------CONTROLES----------------------------
+     143.  00:AC21                      mover_player_derecha:
+     144.  00:AC21  3A EE AB                ld a,(posicion_x); obetenemos el valor actual de la posicion x
+     145.  00:AC24  C6 01                   add 1; incrementamos en 1 el valor
+     146.  00:AC26  32 EE AB                ld (posicion_x), a ; se lo metemos al atributo
+     147.  00:AC29                          ;ld a, 4 ; maover a la derecha es el patrón 4
+     148.  00:AC29                          ;ld (patron),a
+     149.  00:AC29  C9                      ret
+     150.  00:AC2A                      mover_player_izquierda:
+     151.  00:AC2A  3A EE AB                ld a,(posicion_x); obetenemos el valor actual de la posicion x
+     152.  00:AC2D  D6 01                   sub 1 ; incrementamos en 1 el valor
+     153.  00:AC2F  32 EE AB                ld (posicion_x), a ; se lo metemos al atributo posicion x sprite 1
+     154.  00:AC32                          ;ld a, 12 ; maover a la izquierda es el patrón 12
+     155.  00:AC32                          ;ld (patron),a
+     156.  00:AC32  C9                      ret
+     157.  00:AC33                      
+      56   00:AC33                      
+      57   00:AC33                      
+      58   00:AC33                      FINAL:
+
+    LABELS
+-------------------------------------------------
+00:00004010   BEGIN
+00:0000401C   BEGIN.loop
+00:00004024   cargar_sprites
+00:00004028   inicializar_entidades
+00:0000402F   input_system
+00:000000A2 X CHPUT
+00:0000009F X CHGET
+00:00000041 X DISSCR
+00:00000044 X ENASCR
+00:00000047   WRTVDP
+00:0000004D X WRTVRM
+00:0000005F   CHGMOD
+00:0000005C   LDIRVM
+00:00000062   CHGCLR
+00:0000F3E9   FORCLR
+00:0000F3EA X BAKCLR
+00:0000F3EB X BDRCLR
+00:000000D5   GTSTCK
+00:000000D8 X GTTRIG
+00:0000013E X RDVDP
+00:0000F3DB X CLIKSW
+00:0000F3DF X RG0SAV
+00:0000F3E0   RG1SAV
+00:0000F3E1 X RG2SAV
+00:0000F3E2 X RG3SAV
+00:0000F3E3 X RG4SAV
+00:0000F3E4 X RG5SAV
+00:0000F3E5 X RG6SAV
+00:0000F3E6 X RG7SAV
+00:0000F3E7 X STATFL
+00:0000000A X MAXDELAY
+00:0000C000 X STRUCTURA_COPY_HMMM
+00:00004041   inicializar_pantalla
+00:00004060   cargar_tiles_colores_y_mapa_en_VRAM
+00:00004072   mandar_datos
+00:0000407C   SetVdp_Write
+00:00004097 X init_COMMAND_HMMM
+00:000040A6   tileset
+00:0000AAAD   final_tileset
+00:0000AAAD   sprites_player
+00:0000ABED   posicion_y
+00:0000ABEE   posicion_x
+00:0000ABEF   patron
+00:0000ABF0   color
+00:0000ABF1 X anda
+00:0000ABF2   inicializacion_variables_player_sprite
+00:0000AC07   poner_sprites_player_en_VRAM
+00:0000AC14   poner_sprite_player_atributos_en_VRAM
+00:0000AC21   mover_player_derecha
+00:0000AC2A   mover_player_izquierda
+00:0000AC33 X FINAL
+
+
+ Output: obj\main.out
+-------------------------------------------------
+
+ Page: 00
+  Org: 00004000  Size: *  Used: 00000000
+
+    No output
+
+ Output: main.rom
+-------------------------------------------------
+
+ Page: 00
+  Org: 00004000  Size: *  Used: 00006C33
+
+   Address   Length Align   Label
+   00004000   27699         BEGIN
