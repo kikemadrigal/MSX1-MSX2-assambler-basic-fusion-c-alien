@@ -26,12 +26,15 @@
 420'se=1:gosub7100
 1000gosub2000
 1020gosub4000
-1040gosub5000
-1050ifpe<=0thengoto130
-1055ifmu=1thenputsprite0,(0,212),,p1:ma=ma+1:mc=0:mu=0:gosub13000:gosub6000:ifma>4thengoto14100
-1060'gosub6100
-1080fori=0to100:nexti
-1090goto1000
+1040ifbo=1thengosub12950
+1050ifpd=3orpd=1orpd=2thenputsprite0,(px,py),,p1elseifpd=7thenputsprite0,(px,py),,p3
+1060gosub11700
+1070gosub12800
+1080ifpe<=0thengoto130
+1090ifmu=1thenputsprite0,(0,212),,p1:px=8:py=18*8:ma=ma+1:mc=0:mu=0:ms=0:gosub13000:gosub6000:ifma>4thengoto14100
+1100'gosub6100
+1110fori=0to100:nexti
+1900goto1000
 2000onstick(0)gosub2200,2400,2600,2800,3000,3200,3400,3600
 2190return
 2200ifpa=0andt5>=tfthenpo=py:pa=1:pl=1
@@ -82,20 +85,13 @@
 4180ifpa=1andpy>pothenpy=po:pl=-pl:pa=0
 4190ifpa=0andt5<tfthenpy=py+pl
 4290return
-5000ifbo=1thengosub12950
-5010ifpd=3orpd=1orpd=2thenputsprite0,(px,py),,p1
-5020ifpd=7thenputsprite0,(px,py),,p3
-5100gosub11700
-5110gosub12800
-5990return
 6000line(0,184)-(256,212),1,bf
     6010 preset (10,186):F$(0)="Capturas que faltan: "+str$(wc): Z=USR(60)
     6020 preset (10,194):F$(0)="Level: "+str$(ma)+"-"+str$(ms)+" vidas: "+str$(pe): Z=USR(60)
     6025 preset (10,200):P(0)=0:F$(0)="Libre: "+str$(P(0)*16): Z=USR(60): Z=USR(45)
     6030 if bo=1 then preset (10,202):F$(0)="Energia boss: "+str$(be): Z=USR(60)
 6090return
-    6100 preset (0,30):F$(0)="ma "+str$(ma)+" mu "+str$(mu)+" mc "+str$(mc): Z=USR(60)
-    6110 preset (0,40):F$(0)="t0 "+str$(t0)+" t5 "+str$(t5): Z=USR(60)
+    6100 preset (0,30):F$(0)="md "+str$(md)+" mc "+str$(mc)+" tx "+str$(tx)+" ty "+str$(ty):Z=USR(60)
 6190return
 7000F$(0)="UWOL_P.z80":E=USR(31)
 7010f=P(0):P(2)=5:P(3)=0:P(4)=5737:P(6)=0:E=USR(33)
@@ -177,38 +173,47 @@
 12899return
 12950bi=bx:bz=by:by=by-bv
 12955ifbn=0thenline(bx,bz)-(bx+bw,bz+bh),14,bf:copy(48,64)-(64,80),2to(bx,by),0,tpset:ifby<100orby>154thenbv=-bv
-12960ifbe<=0thenbo=0:line(bx,by)-(bx+bw,bz+bh),14,bf:copy(te*8,0*8)-((te*8)+8,(0*8)+8),2to(15*8,21*8),0,tpset:putsprite9,(0,212),,18:vpokemd+15+(21*mw),te
+12960ifbe<=0thenbo=0:line(bx,by)-(bx+bw,bz+bh),14,bf:copy(te*8,0*8)-((te*8)+8,(0*8)+8),2to(25*8,21*8),0,tpset:putsprite9,(0,212),,18:vpokemd+(mc-32)+25+(21*mw),te
 12970ifbo=1andtime/60>8thentime=0:ba=bx:bb=by
 12980ifbo=1thenba=ba-8:ifba<1thenputsprite9,(0,212),,18:ba=0elseputsprite9,(ba,bb),,18
 12999return
-13000ifma=0thenF$(0)="tilemap0.bin":Z=USR(31):P(2)=0:P(3)=&H8000:P(4)=&h4000:Z=USR(34):Z=USR(32):gosub20000:gosub13900
-13010ifma=1thenF$(0)="tilemap1.bin":Z=USR(31):P(2)=0:P(3)=&H8000:P(4)=&h4000:Z=USR(34):Z=USR(32):gosub21000
-13020ifma=2thenF$(0)="tilemap2.bin":Z=USR(31):P(2)=0:P(3)=&H8000:P(4)=&h4000:Z=USR(34):Z=USR(32):gosub22000
-13195gosub13600
+13000ifma=0thenF$(0)="tilemap0.bin":Z=USR(31):P(2)=0:P(3)=&H8000:P(4)=&h4000:Z=USR(34):Z=USR(32)
+13010ifma=1thenF$(0)="tilemap1.bin":Z=USR(31):P(2)=0:P(3)=&H8000:P(4)=&h4000:Z=USR(34):Z=USR(32)
+13020ifma=2thenF$(0)="tilemap2.bin":Z=USR(31):P(2)=0:P(3)=&H8000:P(4)=&h4000:Z=USR(34):Z=USR(32)
+13195gosub13900:gosub13600
 13199return
 13600ifmc>200thenreturn
 13603fori=0to31
 13610copy(8,0)-(256,184),0to(0,0),0,pset
 13620forf=0to23-1
 13630tn=vpeek(md+mc+f*mw):tn=tn+2
-13640iftn>=0andtn<32thencopy(tn*8,0*8)-((tn*8)+8,(0*8)+8),pgto(31*8,f*8),0
-13650iftn>=32andtn<64thencopy((tn-32)*8,1*8)-(((tn-32)*8)+8,(1*8)+8),pgto(31*8,f*8),0
-13660iftn>=64andtn<96thencopy((tn-64)*8,2*8)-(((tn-64)*8)+8,(2*8)+8),pgto(31*8,f*8),0
-13670iftn>=96andtn<128thencopy((tn-96)*8,3*8)-(((tn-96)*8)+8,(3*8)+8),pgto(31*8,f*8),0
-13680iftn>=128andtn<160thencopy((tn-128)*8,4*8)-(((tn-128)*8)+8,(4*8)+8),pgto(31*8,f*8),0
-13690iftn>=160andtn<192thencopy((tn-160)*8,5*8)-(((tn-160)*8)+8,(5*8)+8),pgto(31*8,f*8),0
-13700iftn>=192andtn<224thencopy((tn-192)*8,6*8)-(((tn-192)*8)+8,(6*8)+8),pgto(31*8,f*8),0
-13710iftn>=224andtn<256thencopy((tn-224)*8,7*8)-(((tn-224)*8)+8,(7*8)+8),pgto(31*8,f*8),0
+13640iftn>=0andtn<32thencopy(tn*8,0*8)-((tn*8)+8,(0*8)+8),pgto(31*8,f*8),0,tpset
+13650iftn>=32andtn<64thencopy((tn-32)*8,1*8)-(((tn-32)*8)+8,(1*8)+8),pgto(31*8,f*8),0,tpset
+13660iftn>=64andtn<96thencopy((tn-64)*8,2*8)-(((tn-64)*8)+8,(2*8)+8),pgto(31*8,f*8),0,tpset
+13670iftn>=96andtn<128thencopy((tn-96)*8,3*8)-(((tn-96)*8)+8,(3*8)+8),pgto(31*8,f*8),0,tpset
+13680iftn>=128andtn<160thencopy((tn-128)*8,4*8)-(((tn-128)*8)+8,(4*8)+8),pgto(31*8,f*8),0,tpset
+13690iftn>=160andtn<192thencopy((tn-160)*8,5*8)-(((tn-160)*8)+8,(5*8)+8),pgto(31*8,f*8),0,tpset
+13700iftn>=192andtn<224thencopy((tn-192)*8,6*8)-(((tn-192)*8)+8,(6*8)+8),pgto(31*8,f*8),0,tpset
+13710iftn>=224andtn<256thencopy((tn-224)*8,7*8)-(((tn-224)*8)+8,(7*8)+8),pgto(31*8,f*8),0,tpset
 13720nextf
 13725mc=mc+1
 13730nexti
 13740return
-13900ifms=0thengosub20100
-13901ifms=1thengosub20200
-13910ifms=2thengosub20300
-13920ifms=3thengosub20400
-13930ifms=4thengosub20500
-13940ifms=5thengosub20600
+13900ifma=0andms=0thentf=160:te=28:tw=80:td=42:wc=6:gosub12500:ex(en)=12*8:ey(en)=18*8:et(en)=1
+13901ifma=0andms=1thengosub12500:ex(en)=(17*8):ey(en)=17*8
+13910ifma=0andms=2thengosub12500:ex(en)=23*8:ey(en)=20*8
+13920ifma=0andms=3thengosub12500:ex(en)=21*8:ey(en)=10*8
+13930ifma=0andms=4thengosub12500:ex(en)=26*8:ey(en)=20*8
+13940ifma=0andms=5thengosub12800:bo=1:bn=0:be=100:bx=150:by=120:gosub6000
+    13945 if ma=1 and ms=5 then gosub 12500:ex(en)=(14*8):ey(en)=17*8:tf=160:te=26:tw=80:wc=6:wf=0:cls:for i=0 to 1000:next i:preset(20,212/2):F$(0)="Level 2, Cuartel general":Z=USR(60)
+13950ifma=1andms=6thengosub12500:ex(en)=(3*8):ey(en)=11*8
+13960ifma=1andms=7thengosub12500:ex(en)=(29*8):ey(en)=1*8
+13970ifma=1andms=8thengosub12500:ex(en)=(29*8):ey(en)=1*8
+13980ifma=1andms=9thengosub12500:ex(en)=(29*8):ey(en)=1*8
+13990ifma=1andms=10thengosub12800:bo=2:bn=0:be=100:bx=150:by=120:gosub6000
+13991ifma=2andms=11thengosub12500:ex(en)=(29*8):ey(en)=1*8:tf=160:te=26:tw=80:wc=6:wf=0
+13992ifma=2andms=12thengosub12500:ex(en)=(29*8):ey(en)=1*8
+13993ifma=2andms=2thengosub12500:ex(en)=(29*8):ey(en)=1*8
 13990return
 14000se=1:gosub7100
     14005 cls:preset (10,30):  F$(0)="@@@@  @  @@@@  @ @@@@@ @  @   @": Z=USR(60)
@@ -226,28 +231,4 @@
     14130 preset (10,100):      F$(0)="gráficos:Kikemadrigal": Z=USR(60)
 14140ifinkey$=""thengoto14040
 14190goto150
-20000tf=160:te=28:tw=80:td=42
-20010wc=6
-20090return
-20100'gosub12500:ex(en)=26*8:ey(en)=20*8:et(en)=0
-20110'gosub12500:ex(en)=12*8:ey(en)=18*8:et(en)=1
-20120gosub12800:bo=1:bn=0:be=10:bx=150:by=120:gosub6000
-20190return
-20200gosub12500:ex(en)=(17*8):ey(en)=17*8
-20290return
-20300gosub12500:ex(en)=20*8:ey(en)=20*8
-20390return
-20400gosub12500:ex(en)=16*8:ey(en)=10*8
-20490return
-20500gosub12500:ex(en)=26*8:ey(en)=20*8
-20590return
-20600gosub12800:bo=1:bn=0:be=100:bx=150:by=120:gosub6000
-20690return
-21000tf=160:te=26:tw=80
-21010wc=6:wf=0
-21020cls:fori=0to1000:nexti:preset(256/2,212/2):F$(0)="Level2":Z=USR(60)
-21090return
-22000tf=160:te=26:tw=80
-22010wc=6:wf=0
-22090return
 23000_TURBOOFF

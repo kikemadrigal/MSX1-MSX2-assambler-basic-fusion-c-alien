@@ -13,25 +13,30 @@ rem move /y world2.bin .\bin
 rem start /wait java -jar tools/csv2bin/CSVFenris.jar assets/tilemap0.csv obj/world0.bin
 start /wait tools/sjasm/sjasm.exe src/music.asm
 move /Y music.bin ./bin
-java -jar tools/csv2bin/CSVFenris.jar assets/tilemap0.csv obj/tilemap0.bin
+move /Y src\music.lst ./bin
+
+java -jar tools/csv2bin/CSVFenris.jar assets/tilemap0.csv bin/tilemap0.bin
+java -jar tools/csv2bin/CSVFenris.jar assets/tilemap1.csv bin/tilemap1.bin
 
 
-rem Copiando todos los archivos.bas de la carpeta src
+rem Copiando los archivos.bas de la carpeta src
 rem los pegamos en objects y mostramos un mensajito
-for /R src %%a in (*.bas) do (
-    copy "%%a" obj & echo %%a)
+copy src\autoexec.bas dsk
+copy src\loader.bas dsk
 rem Copiando todos los archivos.bin de la carpeta bin
 rem los pegamos en objects y mostramos un mensajito
 for /R bin %%a in (*.*) do (
-    copy "%%a" obj & echo %%a)
+    copy "%%a" dsk & echo %%a)
 
 
 rem Le quitamos los comentarios a game.bas
-java -jar tools/deletecomments/deletecomments1.4.jar src/main.bas obj/game.bas  
+java -jar tools\deletecomments\deletecomments1.4.jar src\main.bas dsk\game.bas  
 
 rem Lo tokenizamos
 rem start /wait tools/tokenizer/msxbatoken.py obj/game.asc obj/game.bas 
 
+rem copiamos los bin 
+rem move assets\*.bin obj
 
 
 rem             if exist %TARGET_DSK% del /f /Q %TARGET_DSK%
@@ -61,7 +66,8 @@ rem start /wait tools/emulators/openmsx/openmsx.exe  -ext Sony_HBD-50 -ext ram32
 rem start /wait tools/emulators/openmsx/openmsx.exe -script tools/emulators/openmsx/emul_start_config.txt
 rem MSX2
 rem                 start /wait tools/emulators/openmsx/openmsx.exe -machine Philips_NMS_8255 -diska %TARGET_DSK%
- start /wait tools/emulators/openmsx/openmsx.exe -machine Philips_NMS_8255 -diska ./obj
+rem start /wait tools/emulators/openmsx/openmsx.exe -machine Philips_NMS_8255 -diska ./obj
 rem start /wait tools/emulators/openmsx/openmsx.exe -machine Panasonic_FS-A1ST -diska ./obj
+start tools\emulators\openmsx\openmsx.exe -script tools\emulators\openmsx\emul_start_config.txt
 rem MSX2+
 rem start /wait tools/emulators/openmsx/openmsx.exe -machine Sony_HB-F1XV -diska %TARGET_DSK%

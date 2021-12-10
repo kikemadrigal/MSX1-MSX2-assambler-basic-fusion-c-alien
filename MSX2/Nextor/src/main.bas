@@ -90,7 +90,7 @@
 1 'bd=boss dirección 2,3,5 derecha, 6,7,8 izquierda'
 1 'ba=posición x de la bala'
 1 'bb=posición y de la bala del enemigo'
-150 bo=0:bx=0:bw=24:bh=16:bz=0:bi=0:by=0:be=100:bv=8:bd=3:ba=0:bb=0
+150 bo=0:bx=0:bw=24:bh=16:bz=0:bi=0:by=0:be=100:bv=1:bd=3:ba=0:bb=0
 1 'se=canción a reproducir, fx= efecto a reproducir'
 160 se=0:fx=0
 1 'Al pulsar el espacio disparamos'
@@ -124,7 +124,7 @@
 400 gosub 6000
 
 1 'reproducimos la múscia'
-420 se=1:gosub 7100
+420 'se=1:gosub 7100
 
 
 1 'Solo se saldrá de este bucle si se ha llegado al final de la pantalla'
@@ -136,22 +136,29 @@
     1000 gosub 2000
     1 'Chequeamos la física'
     1020 gosub 4000
-    1 'render'
-    1040 gosub 5000
+    1 'Render boss'
+    1040 if bo=1 then gosub 12950
+    1 'Render player'
+    1050 if pd=3 or pd=1 or pd=2 then put sprite 0,(px,py),,p1 else if pd=7 then put sprite 0,(px,py),,p3
+    1 'Render shots'
+    1060 gosub 11700
+    1 'Render enemies'
+    1070 gosub 12800
     1 'Si al player no le quedan vidas, volvemos al principio'
-    1050 if pe<=0 then goto 130
+    1080 if pe<=0 then goto 130
     1 'Si el player ha hecho colisión con el tile end (te), al hacer colisión pone la variable mu=1 y eso es que vamos a cambiar de mundo:
     1 '         Quitamos el sprite del player para que no se vea
-    1 '         Aumentamos el mapa activo (ma) y llamamos a la rutina de cargar mapa 13800, esta rutina tiene los datos de tf(tile suelo), te (tile fina)
+    1 '         Aumentamos el mapa activo (ma) y llamamos a la rutina de cargar mapa 13000 que a suv esta llama a la que tiene los datos de tf(tile suelo), te (tile fina),etc
     1 '         aumentamos el screen y llamamos a la rutina 13000 que tiene los rutinas de carga de los screens,también el número y posición de enemigos'
     1 '         Si se ha llegado al último mundo hemos ganado y vamos a la pantalla ganadora'
     1 '         aunmentamos el número del screen'
-    1055 if mu=1 then put sprite 0,(0,212),,p1:ma=ma+1:ms=ms+1:gosub 13000:mu=0:if ma>4 then goto 14100
-    1 'Debug'
-    1060 'gosub 6100
+    1 '1055 if mu=1 then put sprite 0,(0,212),,p1:ma=ma+1:ms=ms+1:gosub 13000:mu=0:gosub 6000:if ma>4 then goto 14100
+    1090 if mu=1 then put sprite 0,(0,212),,p1:px=8:py=18*8:ma=ma+1:mc=0:mu=0:ms=0:gosub 13000:gosub 6000:if ma>4 then goto 14100
+    1 'Debug
+    1100 'gosub 6100
     1 'Pausa'
-    1080 for i=0 to 100:next i
-1090 goto 1000
+    1110 for i=0 to 100:next i
+1900 goto 1000
 
 
 1 ' ----------------------------------------------------------------------------------------'
@@ -262,7 +269,7 @@
     1 'Si estamos salrando hacia arriba sumamos la velocidad vertical'
     4160 if pa=1 then py=py-pl 
     1 'Si llegamos a 20 pixeles arriba, cambiamos la velocidad para que vaya más rápido'
-    4170 if pa=1 and py<po-20 then pl=-2:'pl=-pl 
+    4170 if pa=1 and py<po-30 then pl=-2:'pl=-pl 
     4180 if pa=1 and py>po then py=po:pl=-pl:pa=0
 
     
@@ -273,27 +280,14 @@
     4190 if pa=0 and t5<tf then py=py+pl
 4290 return
 
-1 ' --------------------------------------------'
-1 '         RENDER SYSTEM & COLLISION
-1 ' --------------------------------------------'
-    1'Boss
-    5000 if bo=1 then gosub 12950
-    1 'Player'
-    5010 if pd=3 or pd=1 or pd=2 then put sprite 0,(px,py),,p1 
-    5020 if pd=7 then put sprite 0,(px,py),,p3
-    1 'Shots'
-    5100 gosub 11700
-    1 'Enemies'
-    5110 gosub 12800
-5990 return
 
 1 ' ----------------------'
 1 '    HUD/Score board
 1 ' ----------------------'
     6000 line (0,184)-(256,212),1,bf 
     6010 preset (10,186):F$(0)="!Capturas que faltan: "+str$(wc): Z=USR(60)
-    6020 preset (10,194):F$(0)="!Level: "+str$(mu)+"-"+str$(ms)+" vidas: "+str$(pe): Z=USR(60)
-    6025 preset (10,200):P(0)=0:F$(0)="!Libre: "+str$(P(1)*P(3)*512): Z=USR(60): Z=USR(45)
+    6020 preset (10,194):F$(0)="!Level: "+str$(ma)+"-"+str$(ms)+" vidas: "+str$(pe): Z=USR(60)
+    6025 preset (10,200):P(0)=0:F$(0)="!Libre: "+str$(P(0)*16): Z=USR(60): Z=USR(45)
     6030 if bo=1 then preset (10,202):F$(0)="!Energia boss: "+str$(be): Z=USR(60)
     1 'BASIC VERSION'
     1 '6000 line (0,184)-(256,212),1,bf 
@@ -305,7 +299,8 @@
 
 1 'Debug'
     1 '6100 preset (0,30):F$(0)="!tx "+str$(tx)+" ty "+str$(ty): Z=USR(60)
-    6100 preset (0,30):F$(0)="mc "+str$(mc)+"mu "+str$(mu): Z=USR(60)
+    6100 preset (0,30):F$(0)="!md "+str$(md)+" mc "+str$(mc)+" tx "+str$(tx)+" ty "+str$(ty):Z=USR(60)
+    1 '6110 preset (0,40):F$(0)="!t0 "+str$(t0)+" t5 "+str$(t5): Z=USR(60)
     1 '6110 preset (0,40):F$(0)="!t0 "+str$(t0)+" t3 "+str$(t3)+" t5 "+str$(t5)+" t7 "+str$(t7): Z=USR(60)
     1 '6120 preset (0,50):F$(0)="!tf "+str$(tf)+"px "+str$(px)+"ms "+str$(ms): Z=USR(60)
     1 'BASIC VERSION'
@@ -331,12 +326,16 @@
 1 ' CON PSG FORMATO WYZ'
 1 '*********************'
 1 'Inicialización player'
+1 '14080 paramos la música'
+1' Reproducimos efecto 7 en línea 10510
 1 'función 31 apertura de fichero
 7000 F$(0)="UWOL_P.z80":E=USR(31)
+    1 'Cargamos los datos del archivo del dsk a RAM'
     1 '33 volcado datos a ramm P(2) segmento, P(3) dirección,P(4) tamaño, P6(0) Incrementar P(3) si <>0'
     7010 f=P(0):P(2)=5:P(3)=0:P(4)=5737:P(6)=0:E=USR(33)
     1 '32 cierre de fichero'
     7020 P(0)=f:E=USR(32)
+    1 ' Inicializamos el player'
     1 '59 ejecución de una rutina de usuario. P(0) segemento de la rutina, P(1) dirección de inicio rutina'
     7030 P(0)=5:P(1)=&H8000:E=USR(59)
     1 '66 Definici¢n o suspensi¢n de una interrupci¢n de usuario, P(0)=1 1 para definir y establecer una interrupci¢n,P(1) segemento de la interrupcion, P(2)=Dirección interrupción
@@ -344,13 +343,13 @@
 7090 return
 1 'Reprocucir canción, necesita la variable mu con el número de canción establecida del 0 al 10'
 1 'se=Musicas (0-A)
-1 'Línea 420 reproduce la canción 2'
+1 'Líneaa 420'
 1 'linea 14000 reproduce la canción 1'
-    7100 P(0)=5:P(1)=&H8003:P(2)=mu*256:E=USR(59)
+    7100 P(0)=5:P(1)=&H8003:P(2)=se*256:E=USR(59)
 7190 return
 
 1 'Parar canción'
-1 'En la línea 14080 para la canción'
+1 '14080 parar canción'
     7200 P(0)=5:P(1)=&H8009:E=USR(59)
 7290 return
 1 'Desvanecemos la música'
@@ -598,13 +597,14 @@
     1 '     Si al boss no le queda energía:
     1 '         Quitamos el modo boss'
     1 '         Dibujamos un rectángulo gris encima'
-    1 '         Metemos en la posición de la VRAM el tile end para que cuando colisione con él nos mande al siguiente mundo'
+    1 '         Metemos en la posición de la VRAM el tile end para que cuando colisione con él nos mande al siguiente mundo, recuerda que son 2 menos en realidad'
     1 '         Copiamos en la posición 28*8,21*8) la imagen del tile end'
     1 '         Hacemos un sonido'
     1 '     Si le queda energía al boss'
     1 '         Creamos un número aleatorio
     1 '         Si el número aleatorio es mayor que 9 creamos un disparo, ponemos que es del booss(dt(en)=1) le ponemos la posición del boss, la dirección (di) hacia la izquierda'
-    12960 if be<=0 then bo=0:line (bx,by)-(bx+bw,bz+bh),14,bf:copy (te*8,0*8)-((te*8)+8,(0*8)+8),2 to (30*8,21*8),0,tpset:put sprite 9,(0,212),,18:vpoke md+29+(21*mw),te
+    1 '12960 if be<=0 then bo=0:line (bx,by)-(bx+bw,bz+bh),14,bf:copy (te*8,0*8)-((te*8)+8,(0*8)+8),2 to (25*8,21*8),0,tpset:put sprite 9,(0,212),,18:vpoke md+(mc-32)+25+(21*mw),te
+    12960 if be<=0 then bo=0:line (bx,by)-(bx+bw,bz+bh),14,bf:copy (te*8,0*8)-((te*8)+8,(0*8)+8),2 to (25*8,21*8),0,tpset:put sprite 9,(0,212),,18:vpoke md+(mc-32)+25+(21*mw),te
     1 'Modo debug para que aparezca en el scrren 0 el boss'
     1 '12890 if be<=0 then bo=0:line (bx,by)-(bx+bw,bz+bh),14,bf:m(28,20)=te:copy (te*8,0*8)-((te*8)+8,(0*8)+8),1 to (28*8,21*8),0,tpset:re=2:gosub 7000: put sprite 9,(0,212),,18
     12970 if bo=1 and time/60>8 then time=0:ba=bx:bb=by
@@ -661,10 +661,15 @@
     1 'gosub 20000, 21000 y 22000 inicializa los mundos o la variables que son suelo, coleccionables, etc'
     1 'gosub 13900 es la pantalla 1'
     1 'gosub 6000 pintamos la pantalla'
-    13000 if ma=0 then F$(0)="tilemap0.bin": Z=USR(31): P(2)=0: P(3)=&H8000: P(4)=&h4000: Z=USR(34): Z=USR(32):gosub 20000:gosub 13900
-    13010 if ma=1 then F$(0)="tilemap1.bin": Z=USR(31): P(2)=0: P(3)=&H8000: P(4)=&h4000: Z=USR(34): Z=USR(32):gosub 21000
-    13020 if ma=2 then F$(0)="tilemap2.bin": Z=USR(31): P(2)=0: P(3)=&H8000: P(4)=&h4000: Z=USR(34): Z=USR(32):gosub 22000
-    13195 gosub 13600
+        1 'Tiles'
+    1 'tf=tile floor, tile suelo, corresponde al tile 160 hasta el 160+32'
+    1 'te=tile end, determina el final del mundo'
+    1 'tc=tile collectable, los que se pueden recoger'
+    1 'tw=tile world el tile que se tiene que pintar cuando se recoja un collectable
+    13000 if ma=0 then F$(0)="tilemap0.bin": Z=USR(31): P(2)=0: P(3)=&H8000: P(4)=&h4000: Z=USR(34): Z=USR(32)
+    13010 if ma=1 then F$(0)="tilemap1.bin": Z=USR(31): P(2)=0: P(3)=&H8000: P(4)=&h4000: Z=USR(34): Z=USR(32)
+    13020 if ma=2 then F$(0)="tilemap2.bin": Z=USR(31): P(2)=0: P(3)=&H8000: P(4)=&h4000: Z=USR(34): Z=USR(32)
+    13195 gosub 13900:gosub 13600
 13199 return
 
 
@@ -700,14 +705,14 @@
             1 'tenemos que poner tn=tn+2 porque nextorbasic no está preparado para screen5'
             1 '13630 tn=vpeek(md+(31+mc)+f*mw):tn=tn+2
             13630 tn=vpeek(md+mc+f*mw):tn=tn+2
-            13640 if tn >=0 and tn <32 then copy (tn*8,0*8)-((tn*8)+8,(0*8)+8),pg to (31*8,f*8),0
-            13650 if tn >=32 and tn <64 then copy ((tn-32)*8,1*8)-(((tn-32)*8)+8,(1*8)+8),pg to (31*8,f*8),0
-            13660 if tn >=64 and tn <96 then copy ((tn-64)*8,2*8)-(((tn-64)*8)+8,(2*8)+8),pg to (31*8,f*8),0
-            13670 if tn>=96 and tn <128 then copy ((tn-96)*8,3*8)-(((tn-96)*8)+8,(3*8)+8),pg to (31*8,f*8),0
-            13680 if tn>=128 and tn <160 then copy ((tn-128)*8,4*8)-(((tn-128)*8)+8,(4*8)+8),pg to (31*8,f*8),0
-            13690 if tn>=160 and tn <192 then copy ((tn-160)*8,5*8)-(((tn-160)*8)+8,(5*8)+8),pg to (31*8,f*8),0
-            13700 if tn>=192 and tn <224 then copy ((tn-192)*8,6*8)-(((tn-192)*8)+8,(6*8)+8),pg to (31*8,f*8),0
-            13710 if tn>=224 and tn <256 then copy ((tn-224)*8,7*8)-(((tn-224)*8)+8,(7*8)+8),pg to (31*8,f*8),0
+            13640 if tn >=0 and tn <32 then copy (tn*8,0*8)-((tn*8)+8,(0*8)+8),pg to (31*8,f*8),0,tpset
+            13650 if tn >=32 and tn <64 then copy ((tn-32)*8,1*8)-(((tn-32)*8)+8,(1*8)+8),pg to (31*8,f*8),0,tpset
+            13660 if tn >=64 and tn <96 then copy ((tn-64)*8,2*8)-(((tn-64)*8)+8,(2*8)+8),pg to (31*8,f*8),0,tpset
+            13670 if tn>=96 and tn <128 then copy ((tn-96)*8,3*8)-(((tn-96)*8)+8,(3*8)+8),pg to (31*8,f*8),0,tpset
+            13680 if tn>=128 and tn <160 then copy ((tn-128)*8,4*8)-(((tn-128)*8)+8,(4*8)+8),pg to (31*8,f*8),0,tpset
+            13690 if tn>=160 and tn <192 then copy ((tn-160)*8,5*8)-(((tn-160)*8)+8,(5*8)+8),pg to (31*8,f*8),0,tpset
+            13700 if tn>=192 and tn <224 then copy ((tn-192)*8,6*8)-(((tn-192)*8)+8,(6*8)+8),pg to (31*8,f*8),0,tpset
+            13710 if tn>=224 and tn <256 then copy ((tn-224)*8,7*8)-(((tn-224)*8)+8,(7*8)+8),pg to (31*8,f*8),0,tpset
         13720 next f
         13725 mc=mc+1
     13730 next i
@@ -718,16 +723,31 @@
 1 ' actualizar pantalla / screen'
 1 'según en que pantalla estemos se crearán un os enemigos u objetos distintos'
     1 'Mundo 0'
-
-    13900 if ms=0 then gosub 20100
-    13901 if ms=1 then gosub 20200
-    13910 if ms=2 then gosub 20300
-    13920 if ms=3 then gosub 20400
-    13930 if ms=4 then gosub 20500
+    13900 if ma=0 and ms=0 then tf=160:te=28:tw=80:td=42:wc=6:gosub 12500:ex(en)=12*8:ey(en)=18*8:et(en)=1
+    13901 if ma=0 and ms=1 then gosub 12500:ex(en)=(17*8):ey(en)=17*8
+    13910 if ma=0 and ms=2 then gosub 12500:ex(en)=23*8:ey(en)=20*8
+    13920 if ma=0 and ms=3 then gosub 12500:ex(en)=21*8:ey(en)=10*8
+    13930 if ma=0 and ms=4 then gosub 12500:ex(en)=26*8:ey(en)=20*8
     1 'Boss'
-    13940 if ms=5 then gosub 20600
+    13940 if ma=0 and ms=5 then gosub 12800:bo=1:bn=0:be=100:bx=150:by=120:gosub 6000
 
+    1 'Mundo 1'
+    13945 if ma=1 and ms=5 then gosub 12500:ex(en)=(14*8):ey(en)=17*8:tf=160:te=26:tw=80:wc=6:wf=0:cls:for i=0 to 1000:next i:preset(20,212/2):F$(0)="!Level 2, Cuartel general":Z=USR(60)
+    13950 if ma=1 and ms=6 then gosub 12500:ex(en)=(3*8):ey(en)=11*8
+    13960 if ma=1 and ms=7 then gosub 12500:ex(en)=(29*8):ey(en)=1*8
+    13970 if ma=1 and ms=8 then gosub 12500:ex(en)=(29*8):ey(en)=1*8
+    13980 if ma=1 and ms=9 then gosub 12500:ex(en)=(29*8):ey(en)=1*8
+    1 'Boss'
+    13990 if ma=1 and ms=10 then gosub 12800:bo=2:bn=0:be=100:bx=150:by=120:gosub 6000
 
+    1 '1 'Mundo 2'
+    13991 if ma=2 and ms=11 then gosub 12500:ex(en)=(29*8):ey(en)=1*8:tf=160:te=26:tw=80:wc=6:wf=0
+    13992 if ma=2 and ms=12 then gosub 12500:ex(en)=(29*8):ey(en)=1*8
+    13993 if ma=2 and ms=2 then gosub 12500:ex(en)=(29*8):ey(en)=1*8
+    1 '13994 if ma=2 and ms=3 then gosub 12500:ex(en)=(29*8):ey(en)=1*8
+    1 '13995 if ma=2 and ms=4 then gosub 12500:ex(en)=(29*8):ey(en)=1*8
+    1 '1 'Bos final'
+    1 '13995 if ma=2 and ms=13 then gosub 12800:bo=3:bn=0:be=100:bx=150:by=120:gosub 6000
 13990 return
 
 
@@ -810,116 +830,12 @@
 1 '150 es la pantalla de menú de bienvenida o scoreboard'
 14190 goto 150
 
-1'------------------------------------'
-1'          World 0
-1'------------------------------------'
-    1 'Tiles'
-    1 'tf=tile floor, tile suelo, corresponde al tile 160 hasta el 160+32'
-    1 'te=tile end, determina el final del mundo'
-    1 'tc=tile collectable, los que se pueden recoger'
-    1 'tw=tile world el tile que se tiene que pintar cuando se recoja un collectable
-    20000 tf=160:te=26:tw=80:td=42
-    1 'World caprturas, las capturas que necesitas para pasar el mundo'
-    20010 wc=6
-20090 return
+
+1 '20000 tf=160:te=28:tw=80:td=42:wc=6
+1 '20100 return
 
 
-1'------------------------------------'
-1'          Screen 0
-1'------------------------------------'
-    1 'creamos 1 enemigo'
-    20100 gosub 12500:ex(en)=26*8:ey(en)=20*8:et(en)=0
-    20110 gosub 12500:ex(en)=12*8:ey(en)=18*8:et(en)=1
-20190 return
-1'------------------------------------'
-1'          Screen 1
-1'------------------------------------'
-    1 'creamos 1 enemigo'
-    20200 gosub 12500:ex(en)=(17*8):ey(en)=17*8
-20290 return
-1'------------------------------------'
-1'          Screen 2
-1'------------------------------------'
-    1 'creamos 1 enemigo'
-    20300 gosub 12500:ex(en)=20*8:ey(en)=20*8
-20390 return
-1'------------------------------------'
-1'          Screen 3
-1'------------------------------------'
-    1 'creamos 1 enemigo'
-    20400 gosub 12500:ex(en)=16*8:ey(en)=10*8
-20490 return
-1'------------------------------------'
-1'          Screen 4
-1'------------------------------------'
-    1 'creamos 1 enemigo'
-    20500 gosub 12500:ex(en)=26*8:ey(en)=20*8
-20590 return
-1'------------------------------------'
-1'          Screen 5
-1'------------------------------------'
-    1 '12800 Inicializamos variables boss'
-    1 'Le decimos que el boss está activo'
-    1 'le ponemos una energía (be)'
-    1 'Mostramos el HUD'
-    20600 gosub 12800:bo=1:bn=0:be=100:bx=150:by=120:gosub 6000
-20690 return
-1'------------------------------------'
-1'          World 1
-1'------------------------------------'
-    1 'Tiles'
-    1 'tf=tile floor, tile suelo, corresponde al tile 160 hasta el 160+32'
-    1 'te=tile end, determina el final del mundo'
-    1 'tc=tile collectable, los que se pueden recoger'
-    1 'tw=tile world el tile que se tiene que pintar cuando se recoja un collectable
-    21000 tf=160:te=26:tw=80
-    1 'World caprturas, las capturas que necesitas para pasar el mundo'
-    1 'wf=world false, variable utilizada por si volv'
-    21010 wc=6:wf=0
-21090 return
-1'------------------------------------'
-1'          Screen 6
-1'------------------------------------'
-1'------------------------------------'
-1'          Screen 7
-1'------------------------------------'
-1'------------------------------------'
-1'          Screen 8
-1'------------------------------------'
-1'------------------------------------'
-1'          Screen 9
-1'------------------------------------'
-1'------------------------------------'
-1'          Screen 10
-1'------------------------------------'
-1'------------------------------------'
-1'          World 2
-1'------------------------------------'
-    1 'Tiles'
-    1 'tf=tile floor, tile suelo, corresponde al tile 160 hasta el 160+32'
-    1 'te=tile end, determina el final del mundo'
-    1 'tc=tile collectable, los que se pueden recoger'
-    1 'tw=tile world el tile que se tiene que pintar cuando se recoja un collectable
-    22000 tf=160:te=26:tw=80
-    1 'World caprturas, las capturas que necesitas para pasar el mundo'
-    1 'wf=world false, variable utilizada por si volv'
-    22010 wc=6:wf=0
-22090 return
-1'------------------------------------'
-1'          Screen 11
-1'------------------------------------'
-1'------------------------------------'
-1'          Screen 12
-1'------------------------------------'
-1'------------------------------------'
-1'          Screen 13
-1'------------------------------------'
-1'------------------------------------'
-1'          Screen 14
-1'------------------------------------'
-1'------------------------------------'
-1'          Screen 15
-1'------------------------------------'
+
 
 
 1 ' ----------------------------------------------------------------------------------------'

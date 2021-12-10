@@ -90,7 +90,7 @@
 1 'bd=boss dirección 2,3,5 derecha, 6,7,8 izquierda'
 1 'ba=posición x de la bala'
 1 'bb=posición y de la bala del enemigo'
-150 bo=0:bx=0:bw=24:bh=16:bz=0:bi=0:by=0:be=100:bv=8:bd=3:ba=0:bb=0
+150 bo=0:bx=0:bw=24:bh=16:bz=0:bi=0:by=0:be=100:bv=1:bd=3:ba=0:bb=0
 1 'se=canción a reproducir, fx= efecto a reproducir'
 160 se=0:fx=0
 1 'Al pulsar el espacio disparamos'
@@ -124,7 +124,7 @@
 400 gosub 6000
 
 1 'reproducimos la múscia'
-420 se=1:gosub 7100
+420 'se=1:gosub 7100
 
 
 1 'Solo se saldrá de este bucle si se ha llegado al final de la pantalla'
@@ -142,12 +142,13 @@
     1050 if pe<=0 then goto 130
     1 'Si el player ha hecho colisión con el tile end (te), al hacer colisión pone la variable mu=1 y eso es que vamos a cambiar de mundo:
     1 '         Quitamos el sprite del player para que no se vea
-    1 '         Aumentamos el mapa activo (ma) y llamamos a la rutina de cargar mapa 13800, esta rutina tiene los datos de tf(tile suelo), te (tile fina)
+    1 '         Aumentamos el mapa activo (ma) y llamamos a la rutina de cargar mapa 13000 que a suv esta llama a la que tiene los datos de tf(tile suelo), te (tile fina),etc
     1 '         aumentamos el screen y llamamos a la rutina 13000 que tiene los rutinas de carga de los screens,también el número y posición de enemigos'
     1 '         Si se ha llegado al último mundo hemos ganado y vamos a la pantalla ganadora'
     1 '         aunmentamos el número del screen'
-    1055 if mu=1 then put sprite 0,(0,212),,p1:ma=ma+1:ms=ms+1:gosub 13000:mu=0:if ma>4 then goto 14100
-    1 'Debug'
+    1 '1055 if mu=1 then put sprite 0,(0,212),,p1:ma=ma+1:ms=ms+1:gosub 13000:mu=0:gosub 6000:if ma>4 then goto 14100
+    1055 if mu=1 then put sprite 0,(0,212),,p1:ma=ma+1:mc=0:mu=0:gosub 13000:gosub 6000:if ma>4 then goto 14100
+    1 'Debug
     1060 'gosub 6100
     1 'Pausa'
     1080 for i=0 to 100:next i
@@ -262,7 +263,7 @@
     1 'Si estamos salrando hacia arriba sumamos la velocidad vertical'
     4160 if pa=1 then py=py-pl 
     1 'Si llegamos a 20 pixeles arriba, cambiamos la velocidad para que vaya más rápido'
-    4170 if pa=1 and py<po-20 then pl=-2:'pl=-pl 
+    4170 if pa=1 and py<po-30 then pl=-2:'pl=-pl 
     4180 if pa=1 and py>po then py=po:pl=-pl:pa=0
 
     
@@ -292,8 +293,8 @@
 1 ' ----------------------'
     6000 line (0,184)-(256,212),1,bf 
     6010 preset (10,186):F$(0)="!Capturas que faltan: "+str$(wc): Z=USR(60)
-    6020 preset (10,194):F$(0)="!Level: "+str$(mu)+"-"+str$(ms)+" vidas: "+str$(pe): Z=USR(60)
-    6025 preset (10,200):P(0)=0:F$(0)="!Libre: "+str$(P(1)*P(3)*512): Z=USR(60): Z=USR(45)
+    6020 preset (10,194):F$(0)="!Level: "+str$(ma)+"-"+str$(ms)+" vidas: "+str$(pe): Z=USR(60)
+    6025 preset (10,200):P(0)=0:F$(0)="!Libre: "+str$(P(0)*16): Z=USR(60): Z=USR(45)
     6030 if bo=1 then preset (10,202):F$(0)="!Energia boss: "+str$(be): Z=USR(60)
     1 'BASIC VERSION'
     1 '6000 line (0,184)-(256,212),1,bf 
@@ -305,7 +306,8 @@
 
 1 'Debug'
     1 '6100 preset (0,30):F$(0)="!tx "+str$(tx)+" ty "+str$(ty): Z=USR(60)
-    6100 preset (0,30):F$(0)="mc "+str$(mc)+"mu "+str$(mu): Z=USR(60)
+    6100 preset (0,30):F$(0)="!ma "+str$(ma)+" mu "+str$(mu)+" mc "+str$(mc): Z=USR(60)
+    6110 preset (0,40):F$(0)="!t0 "+str$(t0)+" t5 "+str$(t5): Z=USR(60)
     1 '6110 preset (0,40):F$(0)="!t0 "+str$(t0)+" t3 "+str$(t3)+" t5 "+str$(t5)+" t7 "+str$(t7): Z=USR(60)
     1 '6120 preset (0,50):F$(0)="!tf "+str$(tf)+"px "+str$(px)+"ms "+str$(ms): Z=USR(60)
     1 'BASIC VERSION'
@@ -335,10 +337,12 @@
 1' Reproducimos efecto 7 en línea 10510
 1 'función 31 apertura de fichero
 7000 F$(0)="UWOL_P.z80":E=USR(31)
+    1 'Cargamos los datos del archivo del dsk a RAM'
     1 '33 volcado datos a ramm P(2) segmento, P(3) dirección,P(4) tamaño, P6(0) Incrementar P(3) si <>0'
     7010 f=P(0):P(2)=5:P(3)=0:P(4)=5737:P(6)=0:E=USR(33)
     1 '32 cierre de fichero'
     7020 P(0)=f:E=USR(32)
+    1 ' Inicializamos el player'
     1 '59 ejecución de una rutina de usuario. P(0) segemento de la rutina, P(1) dirección de inicio rutina'
     7030 P(0)=5:P(1)=&H8000:E=USR(59)
     1 '66 Definici¢n o suspensi¢n de una interrupci¢n de usuario, P(0)=1 1 para definir y establecer una interrupci¢n,P(1) segemento de la interrupcion, P(2)=Dirección interrupción
@@ -348,7 +352,7 @@
 1 'se=Musicas (0-A)
 1 'Líneaa 420'
 1 'linea 14000 reproduce la canción 1'
-    7100 P(0)=5:P(1)=&H8003:P(2)=mu*256:E=USR(59)
+    7100 P(0)=5:P(1)=&H8003:P(2)=se*256:E=USR(59)
 7190 return
 
 1 'Parar canción'
@@ -600,13 +604,13 @@
     1 '     Si al boss no le queda energía:
     1 '         Quitamos el modo boss'
     1 '         Dibujamos un rectángulo gris encima'
-    1 '         Metemos en la posición de la VRAM el tile end para que cuando colisione con él nos mande al siguiente mundo'
+    1 '         Metemos en la posición de la VRAM el tile end para que cuando colisione con él nos mande al siguiente mundo, recuerda que son 2 menos en realidad'
     1 '         Copiamos en la posición 28*8,21*8) la imagen del tile end'
     1 '         Hacemos un sonido'
     1 '     Si le queda energía al boss'
     1 '         Creamos un número aleatorio
     1 '         Si el número aleatorio es mayor que 9 creamos un disparo, ponemos que es del booss(dt(en)=1) le ponemos la posición del boss, la dirección (di) hacia la izquierda'
-    12960 if be<=0 then bo=0:line (bx,by)-(bx+bw,bz+bh),14,bf:copy (te*8,0*8)-((te*8)+8,(0*8)+8),2 to (30*8,21*8),0,tpset:put sprite 9,(0,212),,18:vpoke md+29+(21*mw),te
+    12960 if be<=0 then bo=0:line (bx,by)-(bx+bw,bz+bh),14,bf:copy (te*8,0*8)-((te*8)+8,(0*8)+8),2 to (15*8,21*8),0,tpset:put sprite 9,(0,212),,18:vpoke md+15+(21*mw),te
     1 'Modo debug para que aparezca en el scrren 0 el boss'
     1 '12890 if be<=0 then bo=0:line (bx,by)-(bx+bw,bz+bh),14,bf:m(28,20)=te:copy (te*8,0*8)-((te*8)+8,(0*8)+8),1 to (28*8,21*8),0,tpset:re=2:gosub 7000: put sprite 9,(0,212),,18
     12970 if bo=1 and time/60>8 then time=0:ba=bx:bb=by
@@ -820,7 +824,7 @@
     1 'te=tile end, determina el final del mundo'
     1 'tc=tile collectable, los que se pueden recoger'
     1 'tw=tile world el tile que se tiene que pintar cuando se recoja un collectable
-    20000 tf=160:te=26:tw=80:td=42
+    20000 tf=160:te=28:tw=80:td=42
     1 'World caprturas, las capturas que necesitas para pasar el mundo'
     20010 wc=6
 20090 return
@@ -830,8 +834,9 @@
 1'          Screen 0
 1'------------------------------------'
     1 'creamos 1 enemigo'
-    20100 gosub 12500:ex(en)=26*8:ey(en)=20*8:et(en)=0
-    20110 gosub 12500:ex(en)=12*8:ey(en)=18*8:et(en)=1
+    20100 'gosub 12500:ex(en)=26*8:ey(en)=20*8:et(en)=0
+    20110 'gosub 12500:ex(en)=12*8:ey(en)=18*8:et(en)=1
+    20120 gosub 12800:bo=1:bn=0:be=10:bx=150:by=120:gosub 6000
 20190 return
 1'------------------------------------'
 1'          Screen 1
@@ -878,6 +883,7 @@
     1 'World caprturas, las capturas que necesitas para pasar el mundo'
     1 'wf=world false, variable utilizada por si volv'
     21010 wc=6:wf=0
+    21020 cls:for i=0 to 1000:next i:preset(256/2,212/2):F$(0)="Level 2":Z=USR(60)
 21090 return
 1'------------------------------------'
 1'          Screen 6
