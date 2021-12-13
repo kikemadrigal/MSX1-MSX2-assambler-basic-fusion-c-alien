@@ -17,6 +17,7 @@ move /Y src\music.lst ./bin
 
 java -jar tools/csv2bin/CSVFenris.jar assets/tilemap0.csv bin/tilemap0.bin
 java -jar tools/csv2bin/CSVFenris.jar assets/tilemap1.csv bin/tilemap1.bin
+java -jar tools/csv2bin/CSVFenris.jar assets/tilemap2.csv bin/tilemap2.bin
 
 
 rem Copiando los archivos.bas de la carpeta src
