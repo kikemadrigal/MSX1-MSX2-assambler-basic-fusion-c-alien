@@ -55,7 +55,7 @@
 1 'pd=player dirección'
 1 'pe=player energía, vidas'
 1 'Variables player para la física'
-100 px=0:py=18*8:pn=0:m=0:pw=8:ph=16:pv=1:pl=1:pj=0:pa=0:pd=0:pe=5
+100 px=0:py=18*8:pn=0:m=0:pw=8:ph=16:pv=2:pl=4:pj=0:pa=0:pd=0:pe=5
 1 'p0 player mirando a la derecha 1'
 1 'p1 player mirando a la derecha 2'
 1 'p2 player mirando a la izquierda 1'
@@ -98,7 +98,6 @@
 210 gosub 14000
 1 'No quites este rem que da error'
 220 rem nada
-
 1 'BASIC VERSION'
 1 '1 'Inicilizamos dispositivo: 003B, inicilizamos teclado: 003E, incializamos y preparamos el sonido:&H90'
 1 '35 defusr=&h003B:a=usr(0):defusr1=&h003E:a=usr1(0):defusr2=&H90:a=usr2(0)
@@ -110,6 +109,7 @@
 240 gosub 13000
 1 'Encendemos la pantalla con la rutina &h44 de la bios'
 250 P(0)=0:P(1)=&h44:Z=USR(58)
+
 
 
 
@@ -142,7 +142,7 @@
     1 'Render enemies'
     1070 gosub 12800
     1 'Si al player no le quedan vidas, volvemos al principio'
-    1080 if pe<=0 then goto 130
+    1080 if pe<=0 then gosub 10300:goto 60
     1 'Si el player ha hecho colisión con el tile end (te), al hacer colisión pone la variable mu=1 y eso es que vamos a cambiar de mundo:
     1 '         Quitamos el sprite del player para que no se vea
     1 '         Aumentamos el mapa activo (ma) y llamamos a la rutina de cargar mapa 13000 que a suv esta llama a la que tiene los datos de tf(tile suelo), te (tile fina),etc
@@ -150,7 +150,7 @@
     1 '         Si se ha llegado al último mundo hemos ganado y vamos a la pantalla ganadora'
     1 '         aunmentamos el número del screen'
     1 '1055 if mu=1 then put sprite 0,(0,212),,p1:ma=ma+1:ms=ms+1:gosub 13000:mu=0:gosub 6000:if ma>4 then goto 14100
-    1090 if mu=1 then put sprite 0,(0,212),,p1:px=8:py=18*8:ma=ma+1:mc=0:mu=0:ms=0:gosub 13000:gosub 6000:if ma>4 then goto 14100
+    1090 if mu=1 then put sprite 0,(0,212),,p1:px=8:py=18*8:ma=ma+1:mc=0:mu=0:ms=0:gosub 13000:gosub 6000:if ma>4 then gosub 14100:goto 60
     1 'Si se han cogido todos los objetos de la pantalla'
     1 'Debug
     1 '1100 gosub 6100
@@ -266,7 +266,7 @@
     1 'Si estamos salrando hacia arriba sumamos la velocidad vertical'
     4160 if pa=1 then py=py-pl 
     1 'Si llegamos a 20 pixeles arriba, cambiamos la velocidad para que vaya más rápido'
-    4170 if pa=1 and py<po-30 then pl=-1:'pl=-pl 
+    4170 if pa=1 and py<po-30 then pl=-pl 
     4180 if pa=1 and py>po then py=po:pl=-pl:pa=0
 
     
@@ -297,7 +297,7 @@
 1 '1 'Debug'
 1 '    1 '6100 preset (0,30):F$(0)="!dn "+str$(dn)+" dp0: "+str$(dp(1))+" ds0: "+str$(ds(1))+" dx0: "+str$(dx(1))+" dy0: "+str$(dy(1)): Z=USR(60)
 1 '    6100 a=time/50:preset (0,30):F$(0)="!time "+str$(a): Z=USR(60)
-6100 preset (0,30):F$(0)="!pd "+str$(pd): Z=USR(60)
+6100 preset (0,30):F$(0)="!t "+str$(t)+"ex2 "+str$(ex(2))+" ec2 "+str$(ec(2)): Z=USR(60)
 1 '    1 '6110 preset (0,40):F$(0)="!ep1 "+str$(ep(1))+" es1 "+str$(es(1)): Z=USR(60)
 1 '
 1 '6190 return
@@ -337,8 +337,8 @@
     7200 P(0)=5:P(1)=&H8009:E=USR(59)
 7290 return
 1 'Desvanecemos la música'
-    7300 P(0)=5:E=USR(77)
-7390 return
+ '    7300 P(0)=5:E=USR(77)
+ '7390 return
 
 1 'Reproducir efecto, necesita la variable fx establecida del 0 al 8'
 1 'Efectos reproducidos en las líneas 10510,'
@@ -420,6 +420,12 @@
 1 '-----------------------------------'
 
 
+
+1 'Rutina no le quedan vidas al player'
+    10300 cls:gosub 12700:put sprite 0,(0,212),,p1:preset (10,30): F$(0)="!Capitan Kike fallecido,otra s/n?": Z=USR(60)
+    10310 if inkey$<>"s" and inkey$<>"S" then goto 10310 
+10320 return
+
 1 'Rutina player muere'
     1 ' Si el modo bos está activado quitamos la bala del boss'
     10400 if bo=1 then ba=0:bb=240:put sprite 9,(ba,bb),,18
@@ -430,7 +436,12 @@
     10415 pa=0:if pl <= 0 then pl=-pl
     1 'Pintamos el HUD'
     10420 gosub 6000
+    1 'Hcemos un sonido
+    10430 fx=3:gosub 7400
 10490 return
+
+
+
 
 
 
@@ -521,56 +532,66 @@
 
 1 ' Crear enemigo'
     1 ' si el numero de enemigos creados es mayor que enemigos máximos volvemos para no crear más'
-    12500 if en>=em then return else en=en+1
-    12505 et(en)=0
+    12000 if en>=em then return else en=en+1
+    12010 et(en)=0
     1 'Establecemos las posiciones del enemigo por defecto, después cuando definamos el screen las modificaremos'
-    12510 ex(en)=0:ey(en)=0
+    12020 ex(en)=0:ey(en)=0
     1 'Le asignamos la velocidad horizontal y vertical'
-    12530 ev(en)=1:el(en)=8
+    12030 ev(en)=1:el(en)=8
     1 'Los enemigos son a partir del plano 10
-    12540 es(en)=9:ep(en)=9+en
-    12550 ec(en)=0
-    12560 ee(en)=100
-    12580 ea(en)=1
+    12040 es(en)=9:ep(en)=9+en
+    12050 ec(en)=0
+    12060 ee(en)=100
+    12070 ea(en)=1
+12090 return
 
-12590 return
+
+
 
 1 ' Rutina eliminar enemigo'
     12600 if en<=0 then return
     12600 'ev(ed)=ev(en-1):el(ed)=el(en-1):es(ed)=es(en-1):ep(ed)=ep(en-1):ec(ed)=ec(en-1):ee(ed)=ee(en-1):et(ed)=et(en-1)
     12601 ea(ed)=0
     12610 ex(ed)=0:ey(ed)=212:put sprite ep(ed),(ex(ed),ey(ed)),,es(ed)
-    12650 'en=en-1
+    12650 'gosub 6100
 12660 return
 
 1 'Rutina eliminar todos los enemigos'
 
-    1 '12700 for i=1 to e
-    1 '    12710 ed=i: gosub 12600
-    1 '12720 next i
-    1 '12700 for i=1 to en
-    1 '    12720 if et(i)=2 then put sprite ep(i),(0,212),,es(i) 
+    12700 en=0 
+    1 '12710 for i=1 to e
+    1 '    12720 ed=i: gosub 12600
     1 '12730 next i
-    12700 en=0
+    1 '12740 for i=1 to en
+    1 '    12750 if et(i)=2 then put sprite ep(i),(0,212),,es(i) 
+    1 '12760 next i
 12790 return
 
 1' Render & update physics enemies
 12800 if en<=0 then return 
+    12805 t=time/60:if t>15 then time=0:gosub 12000: ex(en)=256:ey(en)=rnd(1)*(170-100)+100:et(en)=rnd(1)*(5-3)+3
     12810 for i=1 to en
-        12820 if ea(i)=1 then ex(i)=ex(i)-ev(i)  
+        12820 ex(i)=ex(i)-ev(i)  
         1 'Si recorre 20 pasos le cambiamos la velocidad'
-        12830 if ex(i) mod 25=0 then ev(i)=-ev(i)
+        12830 if et(i)=0 and ex(i) mod 25=0 then ev(i)=-ev(i)
+        12835 if et(i)=1 and ex(i) mod 25=0 then ev(i)=-ev(i)
         1 ' Son enemigo 1 el sprite 7 y 8 derecha, 9 y 10 izquierda'
         1 'Si loa velocidad es mayor que 0 es que va andando hacia la derecha, para la animación ponemos un contador (ec(i))'
         12840 ec(i)=ec(i)+1:if ec(i) mod 10=0 then ec(i)=0
         12850 if et(i)=0 and ea(i)=1 then if ev(i)>0 then if ec(i)>4 then es(i)=11 else es(i)=12     
         12860 if et(i)=0 and ea(i)=1 then if ev(i)<=0 then if ec(i)>4 then es(i)=9 else es(i)=10
-        12861 if et(i)=1 and ea(i)=1 then if ev(i)>0 then if ec(i)>4 then es(i)=13 else es(i)=14     
-        12862 if et(i)=1 and ea(i)=1 then if ev(i)<=0 then if ec(i)>4 then es(i)=15 else es(i)=16  
+        12861 if et(i)=1 and ea(i)=1 then if ev(i)>0 then if ec(i)>4 then es(i)=13 else es(i)=14    
+        12862 if et(i)=1 and ea(i)=1 then if ev(i)<=0 then if ec(i)>4 then es(i)=15 else es(i)=16   
+        12863 if et(i)=3 and ea(i)=1 then if ec(i)>4 then es(i)=25 else es(i)=26 
+        12864 if et(i)=4 and ea(i)=1 then if ec(i)>4 then es(i)=29 else es(i)=30  
+
+        12865 if ex(i)<=0 then ed=i:gosub 12600
         1 'Si el enemigo es de tipo 2 cada cierto tiempo disparará'
         12870 put sprite ep(i),(ex(i),ey(i)),,es(i) 
         1 'Colisión del enemigo con el player'
-        12880 if px < ex(i) + 16 and  px + 16 > ex(i) and py < ey(i) + 16 and 16 + py > ey(i) then gosub 10400
+        1 '10400 rutina player muere
+        1 '12600 rutina enemigo muere'
+        12880 if px < ex(i) + 16 and  px + 16 > ex(i) and py < ey(i) + 16 and 16 + py > ey(i) then gosub 10400:ed=i:gosub 12600
         1 'Colision del enemigo con un disparo'
         12890 for w=1 to dn
             1 '15 es el ancho del disparo, 16 es el ancho y el alto del enemigo, 2 es el alto del disparo'
@@ -719,36 +740,35 @@
 13740 return 
 
 
-
 1 ' actualizar pantalla / screen'
 1 'según en que pantalla estemos se crearán un os enemigos u objetos distintos'
     1 'Mundo 0'
-    13800 if ma=0 and ms=0 then tc=26:tf=160:te=28:tw=80:td=42:wc=3:gosub 12500:ex(en)=12*8:ey(en)=18*8:et(en)=0:gosub 12500:ex(en)=28*8:ey(en)=20*8:et(en)=1
 
-    13810 if ma=0 and ms=1 then wc=3:gosub 12500:ex(en)=(17*8):ey(en)=17*8
-    13820 if ma=0 and ms=2 then wc=3:gosub 12500:ex(en)=23*8:ey(en)=20*8
-    13830 if ma=0 and ms=3 then wc=3:gosub 12500:ex(en)=21*8:ey(en)=11*8
-    13840 if ma=0 and ms=4 then wc=3:gosub 12500:ex(en)=26*8:ey(en)=20*8
+    13800 if ma=0 and ms=0 then tc=26:tf=160:te=28:tw=80:td=42:wc=3:gosub 12000:ex(en)=12*8:ey(en)=17*8:et(en)=0:gosub 12000:ex(en)=28*8:ey(en)=20*8:et(en)=1
+    13810 if ma=0 and ms=1 then wc=3:gosub 12000:ex(en)=(17*8):ey(en)=17*8
+    13820 if ma=0 and ms=2 then wc=3:gosub 12000:ex(en)=23*8:ey(en)=20*8
+    13830 if ma=0 and ms=3 then wc=3:gosub 12000:ex(en)=21*8:ey(en)=11*8
+    13840 if ma=0 and ms=4 then wc=3:gosub 12000:ex(en)=26*8:ey(en)=20*8
     1 'Boss'
     13850 if ma=0 and ms=5 then gosub 12800:bo=1:bn=0:be=100:bx=150:by=120:gosub 6000
 
     1 'Mundo 1'
-    13860 if ma=1 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 2, Cuartel general, pulse una tecla":Z=USR(60):wc=3:tc=26:tf=160:te=28:tw=80:td=42:gosub 12500:ex(en)=(14*8):ey(en)=17*8
+    13860 if ma=1 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 2, Cuartel general, pulse una tecla":Z=USR(60):wc=3:tc=26:tf=160:te=28:tw=80:td=42:gosub 12000:ex(en)=(14*8):ey(en)=17*8
     1 'k$=inkey$:if k$="" then goto 13860
-    13870 if ma=1 and ms=1 then wc=3:gosub 12500:ex(en)=(3*8):ey(en)=11*8
-    13880 if ma=1 and ms=2 then wc=3:gosub 12500:ex(en)=(23*8):ey(en)=14*8
-    13890 if ma=1 and ms=3 then wc=3:gosub 12500:ex(en)=(20*8):ey(en)=14*8
-    13900 if ma=1 and ms=4 then wc=3:gosub 12500:ex(en)=(15*8):ey(en)=10*8
+    13870 if ma=1 and ms=1 then wc=3:gosub 12000:ex(en)=(3*8):ey(en)=11*8
+    13880 if ma=1 and ms=2 then wc=3:gosub 12000:ex(en)=(23*8):ey(en)=14*8
+    13890 if ma=1 and ms=3 then wc=3:gosub 12000:ex(en)=(20*8):ey(en)=14*8
+    13900 if ma=1 and ms=4 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=10*8
     1 'Boss'
     13910 if ma=1 and ms=5 then gosub 12800:bo=1:bn=1:be=100:bx=150:by=120:gosub 6000
 
     1 '1 'Mundo 2'
-    13920 if ma=2 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 3, Lanzadera":Z=USR(60):gosub 12500:ex(en)=(10*8):ey(en)=10*8:wc=3:tc=26:tf=160:te=26:tw=80:
-    13930 if ma=2 and ms=1 then wc=3:gosub 12500:ex(en)=(15*8):ey(en)=7*8
-    1 '13940 if ma=2 and ms=2 then wc=3:gosub 12500:ex(en)=(10*8):ey(en)=10*8
-    1 '13950 if ma=2 and ms=3 then wc=3:gosub 12500:ex(en)=(29*8):ey(en)=1*8
-    1 '13960 if ma=2 and ms=4 then wc=3:gosub 12500:ex(en)=(29*8):ey(en)=1*8
-    1 '1 '1 'Bos final'
+    13920 if ma=2 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 3, Lanzadera":Z=USR(60):gosub 12000:ex(en)=(10*8):ey(en)=10*8:wc=3:tc=26:tf=160:te=26:tw=80:
+    13930 if ma=2 and ms=1 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=7*8
+    1 '13940 if ma=2 and ms=2 then wc=3:gosub 12000:ex(en)=(10*8):ey(en)=10*8
+    1 '13950 if ma=2 and ms=3 then wc=3:gosub 12000:ex(en)=(29*8):ey(en)=1*8
+    1 '13960 if ma=2 and ms=4 then wc=3:gosub 12000:ex(en)=(29*8):ey(en)=1*8
+    1 'Bos final'
     13970 if ma=2 and ms=5 then gosub 12800:bo=1:bn=2:be=100:bx=150:by=120:gosub 6000
 13990 return
 
@@ -787,54 +807,60 @@
 1'  Pantalla de Bienvenida y records 
 1'------------------------------------'
     1 'Reproducimos la 1 canción'
-    14000 se=1:gosub 7100
-    14005 cls:preset (10,30):  F$(0)="!@@@@  @  @@@@  @ @@@@@ @  @   @": Z=USR(60)
-    14010 preset (10,40):      F$(0)="!@    @ @ @@@@  @   @  @ @ @ @ @": Z=USR(60)
-    14020 preset (10,50):      F$(0)="!@@@@@   @@     @   @ @   @@  @@": Z=USR(60)
-    14030 preset (10,70):      F$(0)="!10540,capita Kik, debes ir a recoger las muestras fabricadas en otros entornos planetarios.": Z=USR(60)
-    14040 preset (10,110):     F$(0)="!Pero ten cuidado los esbirros de worst que te obstaculizan.": Z=USR(60)
-    14050 preset (10,160): F$(0)= "!Cursores para mover, pulsa una tecla para continuar": Z=USR(60)
-    1 '14060 preset (10,180): F$(0)= "!libre: ": Z=USR(60)
-    1 'Si no se pulsa una tecla se queda en blucle infinito reproduciebdo una música, si se pulsa se para la música'
-    1 '11870 re=1:gosub 4300
-    14070 if inkey$="" then goto 14070
-    1 'Paramos la música'
-    14080 gosub 7200
-    1 'BASIC VERSION'
-    1 '14000 cls:preset (10,30):  print #1,"!@@@@  @  @@@@  @ @@@@@ @  @   @"
-    1 '14010 preset (10,40):      print #1,"!@    @ @ @@@@  @   @  @ @ @ @ @"
-    1 '14020 preset (10,50):      print #1,"!@@@@@   @@     @   @ @   @@  @@"
-    1 '14030 preset (10,70):      print #1,"!10540,capita Kik, debes ir a recoger las muestras fabricadas en otros entornos planetarios."
-    1 '14040 preset (10,110):     print #1,"!Pero ten cuidado los esbirros de worst que te obstaculizan."
-    1 '14050 preset (10,160): print #1, "!Cursores para mover, pulsa una tecla para continuar"
-    1 '14060 preset (10,180): print #1, "!libre: "fre(0)
+    1 'L=&H69ff'
+    14000 L=27135:F$(0)="menu.sc5": Z=USR(31): P(2)=0: P(3)=0 : P(4)=L:Z=USR(34):Z=USR(32)
+    1 '14010 P(5)=1:P(6)=1:P(4)=VAL("&H"+HEX$(L)):J=USR(23):L=L-&h1000:if L>0 then 14010
+    14020 if inkey$="" then goto 14020
+    1 '14000 se=1:gosub 7100
+    1 '14005 cls:preset (10,30):  F$(0)="!@@@@  @  @@@@  @ @@@@@ @  @   @": Z=USR(60)
+    1 '14010 preset (10,40):      F$(0)="!@    @ @ @@@@  @   @  @ @ @ @ @": Z=USR(60)
+    1 '14020 preset (10,50):      F$(0)="!@@@@@   @@     @   @ @   @@  @@": Z=USR(60)
+    1 '14030 preset (10,70):      F$(0)="!10540,capita Kik, debes ir a recoger las muestras fabricadas en otros entornos planetarios.": Z=USR(60)
+    1 '14040 preset (10,110):     F$(0)="!Pero ten cuidado los esbirros de worst que te obstaculizan.": Z=USR(60)
+    1 '14050 preset (10,160): F$(0)= "!Cursores para mover, pulsa una tecla para continuar": Z=USR(60)
+    1 '1 '14060 preset (10,180): F$(0)= "!libre: ": Z=USR(60)
+    1 '1 'Si no se pulsa una tecla se queda en blucle infinito reproduciebdo una música, si se pulsa se para la música'
+    1 '1 '11870 re=1:gosub 4300
     1 '14070 if inkey$="" then goto 14070
+    1 '1 'Paramos la música'
+    1 '14080 gosub 7200
+    1 '1 'BASIC VERSION'
+    1 '1 '14000 cls:preset (10,30):  print #1,"!@@@@  @  @@@@  @ @@@@@ @  @   @"
+    1 '1 '14010 preset (10,40):      print #1,"!@    @ @ @@@@  @   @  @ @ @ @ @"
+    1 '1 '14020 preset (10,50):      print #1,"!@@@@@   @@     @   @ @   @@  @@"
+    1 '1 '14030 preset (10,70):      print #1,"!10540,capita Kik, debes ir a recoger las muestras fabricadas en otros entornos planetarios."
+    1 '1 '14040 preset (10,110):     print #1,"!Pero ten cuidado los esbirros de worst que te obstaculizan."
+    1 '1 '14050 preset (10,160): print #1, "!Cursores para mover, pulsa una tecla para continuar"
+    1 '1 '14060 preset (10,180): print #1, "!libre: "fre(0)
+    1 '1 '14070 if inkey$="" then goto 14070
 1 '160 es donde se carga la pantalla del nivel 0'
-14090 goto 220
+14090 return
 1'------------------------------------'
 1'  Pantalla final ganadora
 1'------------------------------------'
-    14100 cls:preset (10,70):  F$(0)="Felicidades"+str$(ma): Z=USR(60)
-    14110 preset (10,80):      F$(0)="!Has completado la mision": Z=USR(60)
+    14100 L=&h6fff:F$(0)="final.sc5": Z=USR(31): P(2)=0: P(3)=0 : P(4)=L:Z=USR(34):Z=USR(32)
+    14120 if inkey$="" then goto 14120
+    1 '14100 cls:preset (10,70):  F$(0)="Felicidades"+str$(ma): Z=USR(60)
+    1 '14110 preset (10,80):      F$(0)="!Has completado la mision": Z=USR(60)
     1 '14120 preset (10,90):      F$(0)="!Lgica:Kikemadrigal": Z=USR(60)
     1 '14130 preset (10,100):      F$(0)="!gráficos:Kikemadrigal": Z=USR(60)
-    14140 if inkey$="" then goto 14040
-    1 'Borramos los arris para poder volver a cargarlos'
-    1 '14150 erase ex,ey,ev,el,es,ep,ec,ee,dx,dy,dv,dp
+    1 '14140 if inkey$="" then goto 14040
+
 
     1 'BASIC VERSION'
-    1 '14100 cls:preset (10,70):  print #1,"Felicidades"ma
-    1 '14110 preset (10,80):      print #1,"!Has completado la mision"
-    1 '14120 preset (10,90):      print #1,"!Lgica:Kikemadrigal"
-    1 '14130 preset (10,100):      print #1,"!gráficos:Kikemadrigal"
-    1 '14140 if inkey$="" then goto 14040
-    1 '14150 gosub 1100
+    1 '14100 cls:screen5:open "grp:" as #1
+    1 '14110 preset (40,50): print #1,"Felicidades!!!"
+    1 '14120 preset (10,80): print #1,"Has completado la misión"
+    1 '14130 preset (10,90): print #1,"Vuelves a casa"
+    1 '14140 preset (10,100): print #1,"Permanece atento a futuras misiones"
+    1 '14150 preset (10,150): print #1,"Lógica:Kikemadrigal"
+    1 '14160 preset (10,160):print #1,"Gráficos:Kikemadrigal"
+    1 '14170 if inkey$="" then goto 14140
+    1 '14180 bsave"final.sc5",0,&h6fff,s
 1 '150 es la pantalla de menú de bienvenida o scoreboard'
-14190 goto 150
-
-
+1 '14190 goto 150
 1 '20000 tf=160:te=28:tw=80:td=42:wc=6
-1 '20100 return
+20100 return
 
 
 
