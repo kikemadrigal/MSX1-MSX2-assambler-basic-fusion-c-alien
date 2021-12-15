@@ -10,6 +10,6 @@
 1 'Inicializamos disposituvo y teclado'
 90 defusr=&h003B:a=usr(0):defusr1=&h003E
 110 if ms=1 then print "Espera a que implemente la version de MSX 1"
-120 if ms=2 then print "Reading loader...":BLOAD"NBASIC.BIN",R:CLEAR:load"loader.bas",r
-130 if ms=3 then print "Reading loader...":BLOAD"NBASIC.BIN",R:CLEAR:load"loader.bas",r
+120 if ms=2 then print "Reading loader...":BLOAD"NBASIC.BIN",R:clear:load"loader.bas",r
+130 if ms=3 then print "Reading loader...":BLOAD"NBASIC.BIN",R:clear:load"loader.bas",r
 

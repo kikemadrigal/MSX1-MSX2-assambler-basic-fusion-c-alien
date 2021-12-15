@@ -5,7 +5,7 @@
 55DIMex(3),ey(3),ev(3),el(3),es(3),ep(3),ec(3),ee(3),et(3),ea(3)
 60mc=0:ma=0:ms=0:mu=0:mw=6*32
 90pg=2:md=&h8000
-100px=0:py=18*8:pn=0:m=0:pw=8:ph=16:pv=2:pl=4:pj=0:pa=0:pd=0:pe=5
+100px=0:py=18*8:pn=0:m=0:pw=8:ph=16:pv=2:pl=2:pj=0:pa=0:pd=0:pe=5
 110p1=0:p2=1:p3=2:p4=3
 120pp=0:ps=0
 130dm=4:dn=0:dd=0:ds=8:dc=6:dp=0:dw=2:dh=2
@@ -28,7 +28,8 @@
 1060gosub11700
 1070gosub12800
 1080ifpe<=0thengosub10300:goto60
-1090ifmu=1thenputsprite0,(0,212),,p1:px=8:py=18*8:ma=ma+1:mc=0:mu=0:ms=0:gosub13000:gosub6000:'ifma>4thengoto14100
+1090ifmu=1thenputsprite0,(0,212),,p1:px=8:py=18*8:ma=ma+1:mc=0:mu=0:ms=0:gosub13000:gosub6000:ifma>4thengosub14100:goto60
+1110'fori=0to1000:nexti
 1900goto1000
 2000pn=px:pm=py
 2010onstick(0)gosub2200,2400,2600,2000,2000,2000,3400,3600
@@ -51,11 +52,11 @@
 3690return
 4000ifwc=0andbo=0thenputsprite20,(256-16,16),2,34
 4010'ifmc>=200thenreturn
-4020ifpx>256-8thenifwc=0thenputsprite0,(0,212),,p1:putsprite20,(0,212),0,33:gosub12700:gosub13600:py=18*8:px=0:ms=ms+1:gosub13800:gosub6000elsepx=31*8:putsprite20,(256-16,16),6,25
+4020ifpx>256-8thenifwc=0thenputsprite0,(0,212),,p1:putsprite20,(0,212),0,33:gosub12700:gosub13600:py=18*8:px=0:ms=ms+1:gosub13800:gosub6000elsepx=31*8:putsprite20,(256-16,16),6,33
 4030ifpx<0thenpx=0
 4040ifpy>180thengosub10400:'elseifpymod8<>0thenpy=py/8
 4050ifpd=3thentx=(px)/8+(ms*32)elsetx=(px+8)/8+(ms*32)
-4055ty=(py/8)+1:ifpx<=0thentx=0:ifpy<=0thenty=0
+4055ifpymod8=0thenty=(py/8)+1:ifpx<=0thentx=0:ifpy<=0thenty=0
 4060t0=vpeek(md+tx+((ty)*mw))
 4070ift0<tcandt0>=1thenvpokemd+tx+(ty*mw),tw:wc=wc-1:gosub6000:fx=3:gosub7400:ifma=0thenline(px,py+8)-(px+8,py+14),11,bfelseifma=1thenline(px,py+6)-(px+8,py+14),14,bfelseline(px,py+6)-(px+8,py+14),9,bf
 4080ift0=tdthengosub10400:fx=1:gosub7400
@@ -67,10 +68,10 @@
 4125ift1>=tfandpa=1thenpy=py+pl:pa=0
 4130ift3>=tfandpa=0thenpx=px-pv
 4140ift7>=tfandpa=0thenpx=px+pv
-4150ifpa=1andt5>=tfandpl<0thenpa=0:pl=-pl
+4150ift5>=tfandpl<0thenpa=0:pl=-pl
 4160ifpa=1thenpy=py-pl
-4170ifpa=1andpy<po-30thenpl=-pl
-4180ifpa=1andpy>pothenpy=po:pl=-pl:pa=0
+4170ifpa=1andpy<po-24thenpl=-pl
+4180ifpa=1andpy>pothenpl=-pl:pa=0
 4190ifpa=0andt5<tfthenpy=py+pl
 4290return
 6000line(0,184)-(256,212),1,bf
@@ -78,7 +79,9 @@
     6020 preset (10,194):F$(0)="Level: "+str$(ma)+"-"+str$(ms)+" vidas: "+str$(pe): Z=USR(60)
     6030 if bo=1 then preset (10,202):F$(0)="Energia boss: "+str$(be): Z=USR(60)
 6090return
-6100 preset (0,30):F$(0)="t "+str$(t)+"ex2 "+str$(ex(2))+" ec2 "+str$(ec(2)): Z=USR(60)
+6100 preset (0,20):F$(0)="en "+str$(en)+" t "+str$(t): Z=USR(60)
+6140preset(0,60):F$(0)="ex3"+str$(ex(3))+"ec3"+str$(ec(3))+"et3"+str$(et(3))+"ea3"+str$(ea(3)):Z=USR(60)
+6190return
 7000F$(0)="UWOL_P.z80":E=USR(31)
 7010f=P(0):P(2)=5:P(3)=0:P(4)=5737:P(6)=0:E=USR(33)
 7020P(0)=f:E=USR(32)
@@ -89,11 +92,9 @@
 7190return
 7200P(0)=5:P(1)=&H8009:E=USR(59)
 7290return
-7300P(0)=5:E=USR(77)
-7390return
 7400P(0)=5:P(1)=&H800C:P(3)=fx*256:E=USR(59)
 7490return
-    10300 cls:gosub 12700:put sprite 0,(0,212),,p1:preset (10,30): F$(0)="Capitan Kike fallecido,otra s/n?": Z=USR(60)
+    10300 cls:gosub 12700:put sprite 0,(0,212),,p1:preset (10,30): F$(0)="Game over, otra s/n?": Z=USR(60)
 10310ifinkey$<>"s"andinkey$<>"S"thengoto10310
 10320return
 10400ifbo=1thenba=0:bb=240:putsprite9,(ba,bb),,18
@@ -139,35 +140,36 @@
 12030ev(en)=1:el(en)=8
 12040es(en)=9:ep(en)=9+en
 12050ec(en)=0
-12060ee(en)=100
+12060ee(en)=3
 12070ea(en)=1
 12090return
 12600ifen<=0thenreturn
 12600'ev(ed)=ev(en-1):el(ed)=el(en-1):es(ed)=es(en-1):ep(ed)=ep(en-1):ec(ed)=ec(en-1):ee(ed)=ee(en-1):et(ed)=et(en-1)
 12601ea(ed)=0
 12610ex(ed)=0:ey(ed)=212:putspriteep(ed),(ex(ed),ey(ed)),,es(ed)
-12650'gosub6100
+12650'nada'
 12660return
-12700en=0
+12700fori=1toen
+12710ed=i:gosub12600
+12720nexti
+12725en=0
 12790return
 12800ifen<=0thenreturn
-12805t=time/60:ift>15thentime=0:gosub12000:ex(en)=256:ey(en)=rnd(1)*(170-100)+100:et(en)=rnd(1)*(5-3)+3
+12805t=time/60:ift>5thentime=0:gosub12000:ex(en)=255:ey(en)=rnd(1)*(170-100)+100:et(en)=rnd(1)*(5-3)+3:ea(en)=1:fx=1:gosub7400
 12810fori=1toen
-12820ex(i)=ex(i)-ev(i)
+12820ifea(i)=1thenec(i)=ec(i)+1:ex(i)=ex(i)-ev(i):putspriteep(i),(ex(i),ey(i)),,es(i):ifec(i)>=10thenec(i)=0
 12830ifet(i)=0andex(i)mod25=0thenev(i)=-ev(i)
 12835ifet(i)=1andex(i)mod25=0thenev(i)=-ev(i)
-12840ec(i)=ec(i)+1:ifec(i)mod10=0thenec(i)=0
 12850ifet(i)=0andea(i)=1thenifev(i)>0thenifec(i)>4thenes(i)=11elsees(i)=12
 12860ifet(i)=0andea(i)=1thenifev(i)<=0thenifec(i)>4thenes(i)=9elsees(i)=10
 12861ifet(i)=1andea(i)=1thenifev(i)>0thenifec(i)>4thenes(i)=13elsees(i)=14
 12862ifet(i)=1andea(i)=1thenifev(i)<=0thenifec(i)>4thenes(i)=15elsees(i)=16
-12863ifet(i)=3andea(i)=1thenifec(i)>4thenes(i)=25elsees(i)=26
-12864ifet(i)=4andea(i)=1thenifec(i)>4thenes(i)=29elsees(i)=30
-12865ifex(i)<=0thened=i:gosub12600
-12870putspriteep(i),(ex(i),ey(i)),,es(i)
+12863ifet(i)=3andea(i)=1thenifev(i)>0thenifec(i)>4thenes(i)=25elsees(i)=26
+12865ifet(i)=4andea(i)=1thenifev(i)>0thenifec(i)>4thenes(i)=29elsees(i)=30
+12867ifex(i)=1thenifex(i)<=8thened=i:gosub12600:fx=3:gosub7400
 12880ifpx<ex(i)+16andpx+16>ex(i)andpy<ey(i)+16and16+py>ey(i)thengosub10400:ed=i:gosub12600
 12890forw=1todn
-12891ifdx(w)<ex(i)+16anddx(w)+15>ex(i)anddy(w)<ey(i)+16and2+dy(w)>ey(i)thened=i:gosub12600:dd=w:gosub11600:fx=6:gosub7400
+12891ifdx(w)<ex(i)+16anddx(w)+15>ex(i)anddy(w)<ey(i)+16and2+dy(w)>ey(i)thendd=w:gosub11600:ee(i)=ee(i)-1:ifee(i)<=0thened=i:gosub12600:fx=6:gosub7400
 12892nextw
 12895nexti
 12899return
@@ -203,16 +205,11 @@
 13840ifma=0andms=4thenwc=3:gosub12000:ex(en)=26*8:ey(en)=20*8
 13850ifma=0andms=5thengosub12800:bo=1:bn=0:be=100:bx=150:by=120:gosub6000
     13860 if ma=1 and ms=0 then cls:preset(20,212/2):F$(0)="Level 2, Cuartel general, pulse una tecla":Z=USR(60):wc=3:tc=26:tf=160:te=28:tw=80:td=42:gosub 12000:ex(en)=(14*8):ey(en)=17*8
-13870ifma=1andms=1thenwc=3:gosub12000:ex(en)=(3*8):ey(en)=11*8
-13880ifma=1andms=2thenwc=3:gosub12000:ex(en)=(23*8):ey(en)=14*8
-13890ifma=1andms=3thenwc=3:gosub12000:ex(en)=(20*8):ey(en)=14*8
-13900ifma=1andms=4thenwc=3:gosub12000:ex(en)=(15*8):ey(en)=10*8
 13910ifma=1andms=5thengosub12800:bo=1:bn=1:be=100:bx=150:by=120:gosub6000
     13920 if ma=2 and ms=0 then cls:preset(20,212/2):F$(0)="Level 3, Lanzadera":Z=USR(60):gosub 12000:ex(en)=(10*8):ey(en)=10*8:wc=3:tc=26:tf=160:te=26:tw=80:
-13930ifma=2andms=1thenwc=3:gosub12000:ex(en)=(15*8):ey(en)=7*8
 13970ifma=2andms=5thengosub12800:bo=1:bn=2:be=100:bx=150:by=120:gosub6000
 13990return
-14000L=27135:F$(0)="menu.sc5":Z=USR(31):P(2)=0:P(3)=0:P(4)=L:Z=USR(34):Z=USR(32)
+14000L=&h69ff:F$(0)="menu.sc5":Z=USR(31):P(2)=0:P(3)=0:P(4)=L:Z=USR(34):Z=USR(32)
 14020ifinkey$=""thengoto14020
 14090return
 14100L=&h6fff:F$(0)="final.sc5":Z=USR(31):P(2)=0:P(3)=0:P(4)=L:Z=USR(34):Z=USR(32)

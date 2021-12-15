@@ -55,7 +55,7 @@
 1 'pd=player dirección'
 1 'pe=player energía, vidas'
 1 'Variables player para la física'
-100 px=0:py=18*8:pn=0:m=0:pw=8:ph=16:pv=2:pl=4:pj=0:pa=0:pd=0:pe=5
+100 px=0:py=18*8:pn=0:m=0:pw=8:ph=16:pv=2:pl=2:pj=0:pa=0:pd=0:pe=5
 1 'p0 player mirando a la derecha 1'
 1 'p1 player mirando a la derecha 2'
 1 'p2 player mirando a la izquierda 1'
@@ -155,8 +155,7 @@
     1 'Debug
     1 '1100 gosub 6100
     1 'Pausa'
-    1 '1110 for i=0 to 100:next i
-    1 '1120 stop
+    1110 'for i=0 to 1000:next i
 1900 goto 1000
 
 
@@ -220,7 +219,7 @@
             1 'Actualizamos para que pinte los enemigos y los objetos a recoger 13800'
             1 'Pintamos el marcador 6000'
         1 'Si quedan caprturas por recoger:'
-    4020 if px>256-8 then if wc=0 then put sprite 0,(0,212),,p1:put sprite 20,(0,212),0,33 :gosub 12700:gosub 13600:py=18*8:px=0:ms=ms+1: gosub 13800:gosub 6000 else px=31*8:put sprite 20,(256-16,16),6,25
+    4020 if px>256-8 then if wc=0 then put sprite 0,(0,212),,p1:put sprite 20,(0,212),0,33 :gosub 12700:gosub 13600:py=18*8:px=0:ms=ms+1: gosub 13800:gosub 6000 else px=31*8:put sprite 20,(256-16,16),6,33
     1 'Chekeo pantalla'
     4030 if px<0 then px=0 
     1 'Si la posición y es mayor que 180 es que te has caido y morimos'
@@ -229,7 +228,7 @@
     1 'ms=mapa screen nos dice en la pantalla en la que estamos'
     1 'Con esto conseguimos que el sprite de 16*16 pixeles no salga raro en las colisiones (lo ponemos en el lado derecho del cuadro 16*16)'
     4050 if pd=3 then tx=(px)/8+(ms*32) else tx=(px+8)/8+(ms*32)
-    4055 ty=(py/8)+1:if px <=0 then tx = 0:if py<=0 then ty=0 
+    4055 if py mod 8=0 then ty=(py/8)+1:if px <=0 then tx = 0:if py<=0 then ty=0 
     1 'tf=tile floor, o tile suelo o sólido, a partir de las posición 160 empiezan a definirse los tiles que no se pueden pasar, ver imagen tileset: https://github.com/kikemadrigal/MSX1-MSX2-assambler-basic-fusion-c-alien'
     4060 t0=vpeek(md+tx+((ty)*mw))
     1 'Si el tile 0 es un objeto collectable:
@@ -255,19 +254,21 @@
     4120 t7=vpeek(md+(tx-1)+((ty)*mw)) 
 
 
-    1 'Si el tile de la derecha es mayor que tf le hacemos que retroceda' 
+    1 'Si el tile de arriba es mayor que tf le hacemos que baje'
     4125 if t1>=tf and pa=1 then py=py+pl:pa=0
+    1 'Si el tile de la derecha es mayor que tf le hacemos que retroceda' 
     4130 if t3>=tf and pa=0 then px=px-pv 
     4140 if t7>=tf and pa=0 then px=px+pv
 
     1 ' Control del salto'
-    1' Si el tile del suelo es mayor que el del suelo guardado y estamos cayendo reiniciamos
-    4150 if pa=1 and t5>=tf and pl<0 then pa=0:pl=-pl
-    1 'Si estamos salrando hacia arriba sumamos la velocidad vertical'
+    1' Si estamos tocando el suelo y estamos cayendo ponemos que no estamos saltando e invertimos la velocidad
+    4150 if t5>=tf and pl<0 then pa=0:pl=-pl
+    1 'Si estamos salrando hacia arriba restamos la velocidad vertical'
     4160 if pa=1 then py=py-pl 
-    1 'Si llegamos a 20 pixeles arriba, cambiamos la velocidad para que vaya más rápido'
-    4170 if pa=1 and py<po-30 then pl=-pl 
-    4180 if pa=1 and py>po then py=po:pl=-pl:pa=0
+    1 'Si llegamos a 30 pixeles arriba, cambiamos la velocidad para que baje'
+    4170 if pa=1 and py<po-24 then pl=-pl 
+    4180 if pa=1 and py>po then pl=-pl:pa=0
+
 
     
 
@@ -296,11 +297,15 @@
 
 1 '1 'Debug'
 1 '    1 '6100 preset (0,30):F$(0)="!dn "+str$(dn)+" dp0: "+str$(dp(1))+" ds0: "+str$(ds(1))+" dx0: "+str$(dx(1))+" dy0: "+str$(dy(1)): Z=USR(60)
-1 '    6100 a=time/50:preset (0,30):F$(0)="!time "+str$(a): Z=USR(60)
-6100 preset (0,30):F$(0)="!t "+str$(t)+"ex2 "+str$(ex(2))+" ec2 "+str$(ec(2)): Z=USR(60)
+1 '6100 a=time/50:preset (0,30):F$(0)="!pa "+str$(pa)+" pl "+str$(pl): Z=USR(60)
+6100 preset (0,20):F$(0)="!en "+str$(en)+" t "+str$(t): Z=USR(60)
+1 '6110 preset (0,30):F$(0)="ex0 "+str$(ex(0))+" ec0 "+str$(ec(0))+" et0 "+str$(et(0)): Z=USR(60)
+1 '6120 preset (0,40):F$(0)="ex1 "+str$(ex(1))+" ec1 "+str$(ec(1))+" et1 "+str$(et(1)): Z=USR(60)
+1 '6130 preset (0,50):F$(0)="ex2 "+str$(ex(2))+" ec2 "+str$(ec(2))+" et2 "+str$(et(2)): Z=USR(60)
+6140 preset (0,60):F$(0)="ex3 "+str$(ex(3))+" ec3 "+str$(ec(3))+" et3 "+str$(et(3))+" ea3 "+str$(ea(3)): Z=USR(60)
 1 '    1 '6110 preset (0,40):F$(0)="!ep1 "+str$(ep(1))+" es1 "+str$(es(1)): Z=USR(60)
 1 '
-1 '6190 return
+6190 return
 
 
 
@@ -337,8 +342,8 @@
     7200 P(0)=5:P(1)=&H8009:E=USR(59)
 7290 return
 1 'Desvanecemos la música'
- '    7300 P(0)=5:E=USR(77)
- '7390 return
+1 '    7300 P(0)=5:E=USR(77)
+1 '7390 return
 
 1 'Reproducir efecto, necesita la variable fx establecida del 0 al 8'
 1 'Efectos reproducidos en las líneas 10510,'
@@ -422,7 +427,7 @@
 
 
 1 'Rutina no le quedan vidas al player'
-    10300 cls:gosub 12700:put sprite 0,(0,212),,p1:preset (10,30): F$(0)="!Capitan Kike fallecido,otra s/n?": Z=USR(60)
+    10300 cls:gosub 12700:put sprite 0,(0,212),,p1:preset (10,30): F$(0)="!Game over, otra s/n?": Z=USR(60)
     10310 if inkey$<>"s" and inkey$<>"S" then goto 10310 
 10320 return
 
@@ -463,9 +468,8 @@
     11550 ds(dn)=8
     1 'da=disparo activo, solo se utiliza en put sprite'
     11551 da(dn)=1
-     1 'Reproducimos el efecto de sonido 7'
+    1 'Reproducimos el efecto de sonido 7'
     11560 fx=2:gosub 7400
-
 11580 return
 
 
@@ -541,7 +545,7 @@
     1 'Los enemigos son a partir del plano 10
     12040 es(en)=9:ep(en)=9+en
     12050 ec(en)=0
-    12060 ee(en)=100
+    12060 ee(en)=3
     12070 ea(en)=1
 12090 return
 
@@ -553,15 +557,16 @@
     12600 'ev(ed)=ev(en-1):el(ed)=el(en-1):es(ed)=es(en-1):ep(ed)=ep(en-1):ec(ed)=ec(en-1):ee(ed)=ee(en-1):et(ed)=et(en-1)
     12601 ea(ed)=0
     12610 ex(ed)=0:ey(ed)=212:put sprite ep(ed),(ex(ed),ey(ed)),,es(ed)
-    12650 'gosub 6100
+    12650 'nada'
 12660 return
 
 1 'Rutina eliminar todos los enemigos'
 
-    12700 en=0 
-    1 '12710 for i=1 to e
-    1 '    12720 ed=i: gosub 12600
-    1 '12730 next i
+    
+    12700 for i=1 to en
+        12710 ed=i: gosub 12600
+    12720 next i
+    12725 en=0 
     1 '12740 for i=1 to en
     1 '    12750 if et(i)=2 then put sprite ep(i),(0,212),,es(i) 
     1 '12760 next i
@@ -569,25 +574,31 @@
 
 1' Render & update physics enemies
 12800 if en<=0 then return 
-    12805 t=time/60:if t>15 then time=0:gosub 12000: ex(en)=256:ey(en)=rnd(1)*(170-100)+100:et(en)=rnd(1)*(5-3)+3
+    12805 t=time/60:if t>5 then time=0:gosub 12000: ex(en)=255:ey(en)=rnd(1)*(170-100)+100:et(en)=rnd(1)*(5-3)+3:ea(en)=1:fx=1:gosub 7400
     12810 for i=1 to en
-        12820 ex(i)=ex(i)-ev(i)  
-        1 'Si recorre 20 pasos le cambiamos la velocidad'
-        12830 if et(i)=0 and ex(i) mod 25=0 then ev(i)=-ev(i)
-        12835 if et(i)=1 and ex(i) mod 25=0 then ev(i)=-ev(i)
-        1 ' Son enemigo 1 el sprite 7 y 8 derecha, 9 y 10 izquierda'
-        1 'Si loa velocidad es mayor que 0 es que va andando hacia la derecha, para la animación ponemos un contador (ec(i))'
-        12840 ec(i)=ec(i)+1:if ec(i) mod 10=0 then ec(i)=0
-        12850 if et(i)=0 and ea(i)=1 then if ev(i)>0 then if ec(i)>4 then es(i)=11 else es(i)=12     
+        1 'Si el enemigo está activado:
+        1 'Aumentamos el contador para poder hacer las animaciones 
+        1 'Le sumamos la velocidad para hacer quese mueva'
+        1 'Lo dibujamos'
+        1 'Si el contador es mayor que 10 lo ponemos a 0, esto es necesario para la lógica de las animaciones'
+        12820 if ea(i)=1 then ec(i)=ec(i)+1:ex(i)=ex(i)-ev(i):put sprite ep(i),(ex(i),ey(i)),,es(i):if ec(i)>=10 then ec(i)=0
+        1 'Si es de tipo 0 o 1 si comportamiento será que recorre 20 pasos le cambiamos la velocidad'
+        12830 if et(i)=0 and ex(i) mod 25=0 then ev(i)=-ev(i) 
+        12835 if et(i)=1 and ex(i) mod 25=0 then ev(i)=-ev(i) 
+        1 'Si es de tipo 0 y va hacia la derecha tendrá unas animaciones'
+        12850 if et(i)=0 and ea(i)=1 then if ev(i)>0 then if ec(i)>4 then es(i)=11 else es(i)=12  
+        1 'Si es de tipo 0 y va hacia la izquierda tendrá otras animaciones'   
         12860 if et(i)=0 and ea(i)=1 then if ev(i)<=0 then if ec(i)>4 then es(i)=9 else es(i)=10
         12861 if et(i)=1 and ea(i)=1 then if ev(i)>0 then if ec(i)>4 then es(i)=13 else es(i)=14    
         12862 if et(i)=1 and ea(i)=1 then if ev(i)<=0 then if ec(i)>4 then es(i)=15 else es(i)=16   
-        12863 if et(i)=3 and ea(i)=1 then if ec(i)>4 then es(i)=25 else es(i)=26 
-        12864 if et(i)=4 and ea(i)=1 then if ec(i)>4 then es(i)=29 else es(i)=30  
-
-        12865 if ex(i)<=0 then ed=i:gosub 12600
-        1 'Si el enemigo es de tipo 2 cada cierto tiempo disparará'
-        12870 put sprite ep(i),(ex(i),ey(i)),,es(i) 
+        12863 if et(i)=3 and ea(i)=1 then if ev(i)>0 then if ec(i)>4 then es(i)=25 else es(i)=26 
+        1 '12864 if et(i)=3 and ea(i)=1 then if ev(i)<=0 then if ec(i)>4 then es(i)=27 else es(i)=28 
+        12865 if et(i)=4 and ea(i)=1 then if ev(i)>0 then if ec(i)>4 then es(i)=29 else es(i)=30  
+        1 '12865 if et(i)=4 and ea(i)=1 then if ev(i)<=0 then if ec(i)>4 then es(i)=31 else es(i)=32  
+        1 'Si se sale de la pantalla por el borde derecho lo eliminamos'
+        12867 if ex(i)=1 then if ex(i)<=8 then ed=i:gosub 12600:fx=3:gosub 7400
+  
+   
         1 'Colisión del enemigo con el player'
         1 '10400 rutina player muere
         1 '12600 rutina enemigo muere'
@@ -596,7 +607,7 @@
         12890 for w=1 to dn
             1 '15 es el ancho del disparo, 16 es el ancho y el alto del enemigo, 2 es el alto del disparo'
             1 'fx=3:gosub 7400 reproducimos un efecto de sonido'
-            12891 if dx(w) < ex(i) + 16 and  dx(w) + 15 > ex(i) and dy(w) < ey(i) + 16 and 2 + dy(w) > ey(i) then ed=i:gosub 12600:dd=w:gosub 11600:fx=6:gosub 7400
+            12891 if dx(w) < ex(i) + 16 and  dx(w) + 15 > ex(i) and dy(w) < ey(i) + 16 and 2 + dy(w) > ey(i) then dd=w:gosub 11600:ee(i)=ee(i)-1:if ee(i)<=0 then ed=i:gosub 12600:fx=6:gosub 7400
         12892 next w
     12895 next i
 12899 return
@@ -755,16 +766,16 @@
     1 'Mundo 1'
     13860 if ma=1 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 2, Cuartel general, pulse una tecla":Z=USR(60):wc=3:tc=26:tf=160:te=28:tw=80:td=42:gosub 12000:ex(en)=(14*8):ey(en)=17*8
     1 'k$=inkey$:if k$="" then goto 13860
-    13870 if ma=1 and ms=1 then wc=3:gosub 12000:ex(en)=(3*8):ey(en)=11*8
-    13880 if ma=1 and ms=2 then wc=3:gosub 12000:ex(en)=(23*8):ey(en)=14*8
-    13890 if ma=1 and ms=3 then wc=3:gosub 12000:ex(en)=(20*8):ey(en)=14*8
-    13900 if ma=1 and ms=4 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=10*8
-    1 'Boss'
+    1 '13870 if ma=1 and ms=1 then wc=3:gosub 12000:ex(en)=(3*8):ey(en)=11*8
+    1 '13880 if ma=1 and ms=2 then wc=3:gosub 12000:ex(en)=(23*8):ey(en)=14*8
+    1 '13890 if ma=1 and ms=3 then wc=3:gosub 12000:ex(en)=(20*8):ey(en)=14*8
+    1 '13900 if ma=1 and ms=4 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=10*8
+    1 '1 'Boss'
     13910 if ma=1 and ms=5 then gosub 12800:bo=1:bn=1:be=100:bx=150:by=120:gosub 6000
 
     1 '1 'Mundo 2'
     13920 if ma=2 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 3, Lanzadera":Z=USR(60):gosub 12000:ex(en)=(10*8):ey(en)=10*8:wc=3:tc=26:tf=160:te=26:tw=80:
-    13930 if ma=2 and ms=1 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=7*8
+    1 '13930 if ma=2 and ms=1 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=7*8
     1 '13940 if ma=2 and ms=2 then wc=3:gosub 12000:ex(en)=(10*8):ey(en)=10*8
     1 '13950 if ma=2 and ms=3 then wc=3:gosub 12000:ex(en)=(29*8):ey(en)=1*8
     1 '13960 if ma=2 and ms=4 then wc=3:gosub 12000:ex(en)=(29*8):ey(en)=1*8
@@ -807,8 +818,8 @@
 1'  Pantalla de Bienvenida y records 
 1'------------------------------------'
     1 'Reproducimos la 1 canción'
-    1 'L=&H69ff'
-    14000 L=27135:F$(0)="menu.sc5": Z=USR(31): P(2)=0: P(3)=0 : P(4)=L:Z=USR(34):Z=USR(32)
+    1 'L=&H69ff'27135
+    14000 L=&h69ff:F$(0)="menu.sc5": Z=USR(31): P(2)=0: P(3)=0 : P(4)=L:Z=USR(34):Z=USR(32)
     1 '14010 P(5)=1:P(6)=1:P(4)=VAL("&H"+HEX$(L)):J=USR(23):L=L-&h1000:if L>0 then 14010
     14020 if inkey$="" then goto 14020
     1 '14000 se=1:gosub 7100
