@@ -20,7 +20,7 @@ http://msx.tipolisto.es/webmsx/standalone/?disk=files/alien.dsk
 ## 2.1. Nextor Basic
 
 https://kikemadrigal.github.io/MSX1-MSX2-assambler-basic-fusion-c-alien/?disk=MSX2-nextor.dsk
-https://kikemadrigal.github.io/MSX1-MSX2-assambler-basic-fusion-c-alien/?disk=MSX2--nextor.dsk
+
 
 
 ## 2.2. Basic
