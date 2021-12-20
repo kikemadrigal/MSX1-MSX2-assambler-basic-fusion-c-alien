@@ -88,11 +88,11 @@
 7030P(0)=5:P(1)=&H8000:E=USR(59)
 7040P(0)=1:P(1)=5:P(2)=&H8006:E=USR(66)
 7090return
-7100P(0)=5:P(1)=&H8003:P(2)=se*256:E=USR(59)
+7100'P(0)=5:P(1)=&H8003:P(2)=se*256:E=USR(59)
 7190return
-7200P(0)=5:P(1)=&H8009:E=USR(59)
+7200'P(0)=5:P(1)=&H8009:E=USR(59)
 7290return
-7400P(0)=5:P(1)=&H800C:P(3)=fx*256:E=USR(59)
+7400'P(0)=5:P(1)=&H800C:P(3)=fx*256:E=USR(59)
 7490return
     10300 cls:gosub 12700:put sprite 0,(0,212),,p1:preset (10,30): F$(0)="Game over, otra s/n?": Z=USR(60)
 10310ifinkey$<>"s"andinkey$<>"S"thengoto10310
@@ -112,6 +112,7 @@
 11550ds(dn)=8
 11551da(dn)=1
 11560fx=2:gosub7400
+11570stop
 11580return
 11600'ifdn<=0thenreturn
 11601putspritedp(dd),(0,212),,ds(dd)
@@ -205,8 +206,10 @@
 13840ifma=0andms=4thenwc=3:gosub12000:ex(en)=26*8:ey(en)=20*8
 13850ifma=0andms=5thengosub12800:bo=1:bn=0:be=100:bx=150:by=120:gosub6000
     13860 if ma=1 and ms=0 then cls:preset(20,212/2):F$(0)="Level 2, Cuartel general, pulse una tecla":Z=USR(60):wc=3:tc=26:tf=160:te=28:tw=80:td=42:gosub 12000:ex(en)=(14*8):ey(en)=17*8
-13910ifma=1andms=5thengosub12800:bo=1:bn=1:be=100:bx=150:by=120:gosub6000
-    13920 if ma=2 and ms=0 then cls:preset(20,212/2):F$(0)="Level 3, Lanzadera":Z=USR(60):gosub 12000:ex(en)=(10*8):ey(en)=10*8:wc=3:tc=26:tf=160:te=26:tw=80:
+13870ifma=1andms=1thenwc=3:gosub12000:ex(en)=(3*8):ey(en)=11*8
+13880ifma=1andms=2thenwc=3:gosub12000:ex(en)=(23*8):ey(en)=14*8
+13890ifma=1andms=3thenwc=3:gosub12000:ex(en)=(20*8):ey(en)=14*8
+13900ifma=1andms=4thenwc=3:gosub12000:ex(en)=(15*8):ey(en)=10*8
 13970ifma=2andms=5thengosub12800:bo=1:bn=2:be=100:bx=150:by=120:gosub6000
 13990return
 14000L=&h69ff:F$(0)="menu.sc5":Z=USR(31):P(2)=0:P(3)=0:P(4)=L:Z=USR(34):Z=USR(32)

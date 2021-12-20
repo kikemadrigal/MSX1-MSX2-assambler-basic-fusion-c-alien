@@ -1,15 +1,9 @@
-1 '2 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '3 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido 
-1 '4 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '5 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '6 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '7 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '8 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '9 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '10 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '11 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
+
 30 DEFINT A-Z: DIM P(15): Z=USR(1)
-40 _TURBO ON(P(),Z)
+1 'ma=0 and ms=0 then :gosub 12000:ex(en)=12*8:ey(en)=17*8:et(en)=0'
+35 ma=0:ms=0:tc=0:tf=0:te=0:tw=0:td=0:wc=0
+36 dim ex(3),ey(3),et(3)
+40 _TURBO ON(P(),Z,ex(),ey(),et(),ma,ms,tc,tf,te,tw,td,wc)
 1 'nextorbasic nos obliga a defnir los arrays en la primera línea del turbo bloque'
 1 'Según la documentación, se debe de crer un array para los archivos'
 50 DIM F$(1)
@@ -33,13 +27,13 @@
 1 'ee()=enemigo energia '
 1' ec()=enemigo contador para hacer la animación de andar
 1 'et()=enemigo tipo'
-55 DIM ex(3),ey(3),ev(3),el(3),es(3),ep(3),ec(3),ee(3),et(3),ea(3)  
+55 DIM ev(3),el(3),es(3),ep(3),ec(3),ee(3),ea(3)  
 1 'mc=counter map, nos dice en que columna debemos de empezar a escribir, tans solo se utiliza en el desplazamiento de la pantalla
 1 'ma=mapa activo, según el mapa activo cargaremos un archivo.bin u otro del disco en el array (en la RAM)'
 1 'ms=mapa screen, nos dice la pantalla en la que estamos dentro del mundo va del 0 al 15 mundo 1, 6 al 11 mundo 2 y del 12 al 17 mundo 3'
 1 'mu=si está a 1 tendremos que volver a llamar a la rutina cargar mundo para redibujar los mapas'
 1 'mw=mapa width, mapa ancho, número de pantallas por 32 tiles de ancho'
-60 mc=0:ma=0:ms=0:mu=0:mw=6*32
+60 mc=0:mu=0:mw=6*32
 1 'Inicializamos la variables globales del juego''
 1 'tc=tiles collectables, van desde 1 hasta tc '
 1 'tf=tile floor, tile suelo, tiles sólidos, corresponde al tile 160 hasta el 160+32'
@@ -104,7 +98,7 @@
 1 'Inicializamos la música y efectos'
 180 gosub 7000
 1 'Mostramos la pantalla de menu / bienvenida / records'
-210 gosub 14000
+210 gosub 15000
 1 'No quites este rem que da error'
 220 rem nada
 1 'BASIC VERSION'
@@ -159,7 +153,7 @@
     1 '         Si se ha llegado al último mundo hemos ganado y vamos a la pantalla ganadora'
     1 '         aunmentamos el número del screen'
     1 '1055 if mu=1 then put sprite 0,(0,212),,p1:ma=ma+1:ms=ms+1:gosub 13000:mu=0:gosub 6000:if ma>4 then goto 14100
-    1090 if mu=1 then put sprite 0,(0,212),,p1:px=8:py=18*8:ma=ma+1:mc=0:mu=0:ms=0:gosub 13000:gosub 6000:if ma>4 then gosub 14100:goto 60
+    1090 if mu=1 then put sprite 0,(0,212),,p1:px=8:py=18*8:ma=ma+1:mc=0:mu=0:ms=0:gosub 13000:gosub 6000:if ma>4 then gosub 15100:goto 60
     1 'Si se han cogido todos los objetos de la pantalla'
     1 'Debug
     1 '1100 gosub 6100
@@ -343,12 +337,12 @@
 1 'se=Musicas (0-A)
 1 'Líneaa 420'
 1 'linea 14000 reproduce la canción 1'
-    7100 'P(0)=5:P(1)=&H8003:P(2)=se*256:E=USR(59)
+    7100 P(0)=5:P(1)=&H8003:P(2)=se*256:E=USR(59)
 7190 return
 
 1 'Parar canción'
 1 '14080 parar canción'
-    7200 'P(0)=5:P(1)=&H8009:E=USR(59)
+    7200 P(0)=5:P(1)=&H8009:E=USR(59)
 7290 return
 1 'Desvanecemos la música'
 1 '    7300 P(0)=5:E=USR(77)
@@ -365,7 +359,7 @@
 1 '6=grave corto'
 1 '7=2 sonidos agusdos, como salto'
 1 '8=agudo fino'
-    7400 'P(0)=5:P(1)=&H800C:P(3)=fx*256:E=USR(59)
+    7400 P(0)=5:P(1)=&H800C:P(3)=fx*256:E=USR(59)
 7490 return
 
 1 '*********************'
@@ -479,7 +473,6 @@
     11551 da(dn)=1
     1 'Reproducimos el efecto de sonido 7'
     11560 fx=2:gosub 7400
-    11570 stop
 11580 return
 
 
@@ -521,6 +514,7 @@
         1 '     Hacemos un sonido'
         11742 if bo=1 then if dx(i) < bx + bw and  dx(i) + dw > bx and dy(i) < by + bh and dy(i) + dh > by then be=be-10:dd=i:gosub 11600:gosub 6000     
     11750 next i
+
 11790 return
 
 
@@ -584,7 +578,7 @@
 
 1' Render & update physics enemies
 12800 if en<=0 then return 
-    12805 t=time/60:if t>5 then time=0:gosub 12000: ex(en)=255:ey(en)=rnd(1)*(170-100)+100:et(en)=rnd(1)*(5-3)+3:ea(en)=1:fx=1:gosub 7400
+    12805 t=time/60:if t>55 then time=0:gosub 12000: ex(en)=255:ey(en)=rnd(1)*(170-100)+100:et(en)=rnd(1)*(5-3)+3:ea(en)=1:fx=1:gosub 7400
     12810 for i=1 to en
         1 'Si el enemigo está activado:
         1 'Aumentamos el contador para poder hacer las animaciones 
@@ -761,37 +755,33 @@
 13740 return 
 
 
+
+
+
 1 ' actualizar pantalla / screen'
 1 'según en que pantalla estemos se crearán un os enemigos u objetos distintos'
     1 'Mundo 0'
-
-    13800 if ma=0 and ms=0 then tc=26:tf=160:te=28:tw=80:td=42:wc=3:gosub 12000:ex(en)=12*8:ey(en)=17*8:et(en)=0:gosub 12000:ex(en)=28*8:ey(en)=20*8:et(en)=1
+    13800 _turbo off
+    13800 if ma=0 and ms=0 then tc=26:tf=160:te=28:tw=80:td=42:wc=3:gosub 12000:ex(en)=12*8:ey(en)=17*8:et(en)=0
     13810 if ma=0 and ms=1 then wc=3:gosub 12000:ex(en)=(17*8):ey(en)=17*8
     13820 if ma=0 and ms=2 then wc=3:gosub 12000:ex(en)=23*8:ey(en)=20*8
     13830 if ma=0 and ms=3 then wc=3:gosub 12000:ex(en)=21*8:ey(en)=11*8
     13840 if ma=0 and ms=4 then wc=3:gosub 12000:ex(en)=26*8:ey(en)=20*8
-    1 'Boss'
-    13850 if ma=0 and ms=5 then gosub 12800:bo=1:bn=0:be=100:bx=150:by=120:gosub 6000
 
-    1 'Mundo 1'
-    13860 if ma=1 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 2, Cuartel general, pulse una tecla":Z=USR(60):wc=3:tc=26:tf=160:te=28:tw=80:td=42:gosub 12000:ex(en)=(14*8):ey(en)=17*8
-    1 'k$=inkey$:if k$="" then goto 13860
-    13870 if ma=1 and ms=1 then wc=3:gosub 12000:ex(en)=(3*8):ey(en)=11*8
+1 '13870 if ma=1 and ms=1 then wc=3:gosub 12000:ex(en)=(3*8):ey(en)=11*8
     13880 if ma=1 and ms=2 then wc=3:gosub 12000:ex(en)=(23*8):ey(en)=14*8
     13890 if ma=1 and ms=3 then wc=3:gosub 12000:ex(en)=(20*8):ey(en)=14*8
     13900 if ma=1 and ms=4 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=10*8
-    1 '1 'Boss'
-    1 '13910 if ma=1 and ms=5 then gosub 12800:bo=1:bn=1:be=100:bx=150:by=120:gosub 6000
-
+   
     1 '1 'Mundo 2'
-    1 '13920 if ma=2 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 3, Lanzadera":Z=USR(60):gosub 12000:ex(en)=(10*8):ey(en)=10*8:wc=3:tc=26:tf=160:te=26:tw=80:
-    1 '13930 if ma=2 and ms=1 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=7*8
-    1 '13940 if ma=2 and ms=2 then wc=3:gosub 12000:ex(en)=(10*8):ey(en)=10*8
-    1 '13950 if ma=2 and ms=3 then wc=3:gosub 12000:ex(en)=(29*8):ey(en)=1*8
+    13920 if ma=2 and ms=0 then gosub 12000:ex(en)=(10*8):ey(en)=10*8:wc=3:tc=26:tf=160:te=26:tw=80
+    13930 if ma=2 and ms=1 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=7*8
+    13940 if ma=2 and ms=2 then wc=3:gosub 12000:ex(en)=(10*8):ey(en)=10*8
+    13950 if ma=2 and ms=3 then wc=3:gosub 12000:ex(en)=(29*8):ey(en)=1*8
     1 '13960 if ma=2 and ms=4 then wc=3:gosub 12000:ex(en)=(29*8):ey(en)=1*8
-    1 'Bos final'
-    13970 if ma=2 and ms=5 then gosub 12800:bo=1:bn=2:be=100:bx=150:by=120:gosub 6000
-13990 return
+
+
+14990 return
 
 
 
@@ -829,9 +819,9 @@
 1'------------------------------------'
     1 'Reproducimos la 1 canción'
     1 'L=&H69ff'27135
-    14000 L=&h69ff:F$(0)="menu.sc5": Z=USR(31): P(2)=0: P(3)=0 : P(4)=L:Z=USR(34):Z=USR(32)
+    15000 L=&h69ff:F$(0)="menu.sc5": Z=USR(31): P(2)=0: P(3)=0 : P(4)=L:Z=USR(34):Z=USR(32)
     1 '14010 P(5)=1:P(6)=1:P(4)=VAL("&H"+HEX$(L)):J=USR(23):L=L-&h1000:if L>0 then 14010
-    14020 if inkey$="" then goto 14020
+    15020 if inkey$="" then goto 14020
     1 '14000 se=1:gosub 7100
     1 '14005 cls:preset (10,30):  F$(0)="!@@@@  @  @@@@  @ @@@@@ @  @   @": Z=USR(60)
     1 '14010 preset (10,40):      F$(0)="!@    @ @ @@@@  @   @  @ @ @ @ @": Z=USR(60)
@@ -855,12 +845,12 @@
     1 '1 '14060 preset (10,180): print #1, "!libre: "fre(0)
     1 '1 '14070 if inkey$="" then goto 14070
 1 '160 es donde se carga la pantalla del nivel 0'
-14090 return
+15090 return
 1'------------------------------------'
 1'  Pantalla final ganadora
 1'------------------------------------'
-    14100 L=&h6fff:F$(0)="final.sc5": Z=USR(31): P(2)=0: P(3)=0 : P(4)=L:Z=USR(34):Z=USR(32)
-    14120 if inkey$="" then goto 14120
+    15100 L=&h6fff:F$(0)="final.sc5": Z=USR(31): P(2)=0: P(3)=0 : P(4)=L:Z=USR(34):Z=USR(32)
+    15120 if inkey$="" then goto 14120
     1 '14100 cls:preset (10,70):  F$(0)="Felicidades"+str$(ma): Z=USR(60)
     1 '14110 preset (10,80):      F$(0)="!Has completado la mision": Z=USR(60)
     1 '14120 preset (10,90):      F$(0)="!Lgica:Kikemadrigal": Z=USR(60)
@@ -893,5 +883,4 @@
 
 
 
-23000 _TURBO OFF
-
+1 '23000 _TURBO OFF

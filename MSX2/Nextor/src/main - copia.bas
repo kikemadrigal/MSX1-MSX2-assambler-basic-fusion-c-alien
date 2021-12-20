@@ -1,13 +1,4 @@
-1 '2 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '3 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido 
-1 '4 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '5 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '6 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '7 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '8 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '9 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '10 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
-1 '11 rem un ejemplo muy pero que muy largo latgo de cojones inmoso del mundo mundial jamas conocido
+
 30 DEFINT A-Z: DIM P(15): Z=USR(1)
 40 _TURBO ON(P(),Z)
 1 'nextorbasic nos obliga a defnir los arrays en la primera línea del turbo bloque'
@@ -343,12 +334,12 @@
 1 'se=Musicas (0-A)
 1 'Líneaa 420'
 1 'linea 14000 reproduce la canción 1'
-    7100 'P(0)=5:P(1)=&H8003:P(2)=se*256:E=USR(59)
+    7100 P(0)=5:P(1)=&H8003:P(2)=se*256:E=USR(59)
 7190 return
 
 1 'Parar canción'
 1 '14080 parar canción'
-    7200 'P(0)=5:P(1)=&H8009:E=USR(59)
+    7200 P(0)=5:P(1)=&H8009:E=USR(59)
 7290 return
 1 'Desvanecemos la música'
 1 '    7300 P(0)=5:E=USR(77)
@@ -365,7 +356,7 @@
 1 '6=grave corto'
 1 '7=2 sonidos agusdos, como salto'
 1 '8=agudo fino'
-    7400 'P(0)=5:P(1)=&H800C:P(3)=fx*256:E=USR(59)
+    7400 P(0)=5:P(1)=&H800C:P(3)=fx*256:E=USR(59)
 7490 return
 
 1 '*********************'
@@ -479,7 +470,6 @@
     11551 da(dn)=1
     1 'Reproducimos el efecto de sonido 7'
     11560 fx=2:gosub 7400
-    11570 stop
 11580 return
 
 
@@ -776,15 +766,15 @@
     1 'Mundo 1'
     13860 if ma=1 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 2, Cuartel general, pulse una tecla":Z=USR(60):wc=3:tc=26:tf=160:te=28:tw=80:td=42:gosub 12000:ex(en)=(14*8):ey(en)=17*8
     1 'k$=inkey$:if k$="" then goto 13860
-    13870 if ma=1 and ms=1 then wc=3:gosub 12000:ex(en)=(3*8):ey(en)=11*8
-    13880 if ma=1 and ms=2 then wc=3:gosub 12000:ex(en)=(23*8):ey(en)=14*8
-    13890 if ma=1 and ms=3 then wc=3:gosub 12000:ex(en)=(20*8):ey(en)=14*8
-    13900 if ma=1 and ms=4 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=10*8
+    1 '13870 if ma=1 and ms=1 then wc=3:gosub 12000:ex(en)=(3*8):ey(en)=11*8
+    1 '13880 if ma=1 and ms=2 then wc=3:gosub 12000:ex(en)=(23*8):ey(en)=14*8
+    1 '13890 if ma=1 and ms=3 then wc=3:gosub 12000:ex(en)=(20*8):ey(en)=14*8
+    1 '13900 if ma=1 and ms=4 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=10*8
     1 '1 'Boss'
-    1 '13910 if ma=1 and ms=5 then gosub 12800:bo=1:bn=1:be=100:bx=150:by=120:gosub 6000
+    13910 if ma=1 and ms=5 then gosub 12800:bo=1:bn=1:be=100:bx=150:by=120:gosub 6000
 
     1 '1 'Mundo 2'
-    1 '13920 if ma=2 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 3, Lanzadera":Z=USR(60):gosub 12000:ex(en)=(10*8):ey(en)=10*8:wc=3:tc=26:tf=160:te=26:tw=80:
+    13920 if ma=2 and ms=0 then cls:preset(20,212/2):F$(0)="!Level 3, Lanzadera":Z=USR(60):gosub 12000:ex(en)=(10*8):ey(en)=10*8:wc=3:tc=26:tf=160:te=26:tw=80:
     1 '13930 if ma=2 and ms=1 then wc=3:gosub 12000:ex(en)=(15*8):ey(en)=7*8
     1 '13940 if ma=2 and ms=2 then wc=3:gosub 12000:ex(en)=(10*8):ey(en)=10*8
     1 '13950 if ma=2 and ms=3 then wc=3:gosub 12000:ex(en)=(29*8):ey(en)=1*8
@@ -894,4 +884,3 @@
 
 
 23000 _TURBO OFF
-
