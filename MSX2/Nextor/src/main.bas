@@ -479,7 +479,7 @@
     11551 da(dn)=1
     1 'Reproducimos el efecto de sonido 7'
     11560 fx=2:gosub 7400
-    11570 stop
+    11570 'stop
 11580 return
 
 
